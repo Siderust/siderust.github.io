@@ -1,0 +1,150 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Badge from '../../components/Badge.astro';
+import Icon from '../../components/Icon.astro';
+import { getProjects } from '../../lib/projects';
+import { formatDate, formatNumber, withBase } from '../../lib/utils';
+import { statusStyles } from '../../lib/status';
+
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+    props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+const status = statusStyles[project.status];
+const statusSummary = {
+  active: 'Actively maintained with recent updates and releases.',
+  stable: 'Release cadence is steady with longer support windows.',
+  experimental: 'Rapid iteration and evolving APIs are expected.',
+}[project.status];
+---
+
+<BaseLayout title={project.displayName} description={project.description}>
+  <section class="section">
+    <div class="mx-auto w-full max-w-6xl px-6">
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div class="space-y-4">
+          <a class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-500/80 dark:text-blue-300/80" href={withBase('/projects/')}>
+            Projects
+          </a>
+          <h1 class="text-4xl font-semibold text-slate-900 dark:text-white">{project.displayName}</h1>
+          <p class="max-w-2xl text-lg text-slate-600 dark:text-slate-300">{project.description}</p>
+          <div class="flex flex-wrap gap-2">
+            <Badge label={`${formatNumber(project.stars)} stars`} icon="star" />
+            <Badge label={project.language} icon="code" />
+            <Badge label={project.latestRelease ? `Release ${project.latestRelease.tag}` : 'No releases'} icon="tag" />
+            <Badge label={`Updated ${formatDate(project.updatedAt)}`} icon="calendar" />
+          </div>
+          <div class="flex flex-wrap gap-3 text-sm">
+            <a
+              class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 font-semibold text-white shadow-soft motion-safe:transition motion-safe:hover:-translate-y-0.5 hover:bg-blue-500"
+              href={project.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Icon name="github" class="h-4 w-4" />
+              View repo
+            </a>
+            {project.docsUrl ? (
+              <a
+                class="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 dark:border-slate-800 dark:text-slate-200 dark:hover:text-white"
+                href={project.docsUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Icon name="book-open" class="h-4 w-4" />
+                Docs
+              </a>
+            ) : null}
+            {project.crateUrl ? (
+              <a
+                class="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900 dark:border-slate-800 dark:text-slate-200 dark:hover:text-white"
+                href={project.crateUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Icon name="package" class="h-4 w-4" />
+                Crate
+              </a>
+            ) : null}
+          </div>
+        </div>
+        <aside class="card w-full max-w-sm space-y-4 p-6">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-500/80 dark:text-blue-300/80">Status</p>
+            <div class={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${status.tone}`}>{status.label}</div>
+            <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">{statusSummary}</p>
+          </div>
+          <div class="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            <p class="inline-flex items-center gap-2">
+              <Icon name="star" class="h-4 w-4" />
+              {formatNumber(project.stars)} stars
+            </p>
+            <p class="inline-flex items-center gap-2">
+              <Icon name="git-branch" class="h-4 w-4" />
+              {formatNumber(project.forks)} forks
+            </p>
+            <p class="inline-flex items-center gap-2">
+              <Icon name="activity" class="h-4 w-4" />
+              Updated {formatDate(project.updatedAt)}
+            </p>
+            {project.latestRelease ? (
+              <a class="inline-flex items-center gap-2 hover:text-slate-900 dark:hover:text-white" href={project.latestRelease.url}>
+                <Icon name="tag" class="h-4 w-4" />
+                Latest release {project.latestRelease.tag}
+              </a>
+            ) : (
+              <p class="inline-flex items-center gap-2">
+                <Icon name="tag" class="h-4 w-4" />
+                No releases yet
+              </p>
+            )}
+          </div>
+        </aside>
+      </div>
+
+      <div class="mt-12 grid gap-8 lg:grid-cols-[2fr_1fr]">
+        <div class="space-y-8">
+          <section class="space-y-3">
+            <h2 class="text-2xl font-semibold text-slate-900 dark:text-white">Why it exists</h2>
+            <p class="text-sm text-slate-600 dark:text-slate-300">{project.why}</p>
+            {project.features.length ? (
+              <ul class="mt-4 grid gap-2 text-sm text-slate-600 dark:text-slate-300">
+                {project.features.map((feature) => (
+                  <li class="inline-flex items-start gap-2">
+                    <Icon name="check" class="mt-0.5 h-4 w-4 text-blue-500 dark:text-blue-300" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+
+          <section class="space-y-3">
+            <h2 class="text-2xl font-semibold text-slate-900 dark:text-white">Getting started</h2>
+            <pre class="whitespace-pre-wrap rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200">{project.gettingStarted}</pre>
+          </section>
+        </div>
+
+        <div class="space-y-8">
+          <section class="card space-y-3 p-6">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Contributing</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{project.contributing}</p>
+            <a class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200" href={`${project.url}/issues`}>
+              View issues
+              <Icon name="arrow-right" class="h-4 w-4" />
+            </a>
+          </section>
+          <section class="card space-y-3 p-6">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">License</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{project.license}</p>
+          </section>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

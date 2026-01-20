@@ -1,0 +1,13 @@
+---
+import Icon from './Icon.astro';
+---
+
+<button
+  type="button"
+  data-theme-toggle
+  class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-2 text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:text-white"
+  aria-label="Toggle dark mode"
+>
+  <Icon name="moon" class="h-4 w-4 dark:hidden" />
+  <Icon name="sun" class="hidden h-4 w-4 dark:inline-flex" />
+</button>

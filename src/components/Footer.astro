@@ -1,0 +1,58 @@
+---
+import Icon from './Icon.astro';
+import { config } from '../lib/config';
+import { withBase } from '../lib/utils';
+---
+
+<footer class="border-t border-slate-200/70 bg-white dark:border-slate-800/70 dark:bg-slate-950">
+  <div class="mx-auto w-full max-w-6xl px-6 py-12">
+    <div class="grid gap-8 md:grid-cols-[2fr_1fr_1fr]">
+      <div class="space-y-3">
+        <p class="text-lg font-semibold text-slate-900 dark:text-white">{config.org.name}</p>
+        <p class="text-sm text-slate-600 dark:text-slate-300">{config.org.description}</p>
+        <div class="flex flex-wrap gap-3 text-sm text-slate-600 dark:text-slate-300">
+          <a class="inline-flex items-center gap-2 hover:text-slate-900 dark:hover:text-white" href={config.org.url}>
+            <Icon name="github" class="h-4 w-4" />
+            GitHub Org
+          </a>
+          <a class="inline-flex items-center gap-2 hover:text-slate-900 dark:hover:text-white" href={config.links.issuesUrl}>
+            <Icon name="bug" class="h-4 w-4" />
+            Issues
+          </a>
+          <a class="inline-flex items-center gap-2 hover:text-slate-900 dark:hover:text-white" href={config.links.discussionsUrl}>
+            <Icon name="messages-square" class="h-4 w-4" />
+            Discussions
+          </a>
+          <a class="inline-flex items-center gap-2 hover:text-slate-900 dark:hover:text-white" href={config.links.licenseUrl}>
+            <Icon name="scale" class="h-4 w-4" />
+            License
+          </a>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <p class="text-sm font-semibold text-slate-900 dark:text-white">Explore</p>
+        <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+          <li><a class="hover:text-slate-900 dark:hover:text-white" href={withBase('/')}>Home</a></li>
+          <li><a class="hover:text-slate-900 dark:hover:text-white" href={withBase('/projects/')}>Projects</a></li>
+          <li><a class="hover:text-slate-900 dark:hover:text-white" href={withBase('/about/')}>About</a></li>
+        </ul>
+      </div>
+      <div class="space-y-3">
+        <p class="text-sm font-semibold text-slate-900 dark:text-white">Built with</p>
+        <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+          <li class="inline-flex items-center gap-2">
+            <Icon name="sparkles" class="h-4 w-4" />
+            Astro + Tailwind CSS
+          </li>
+          <li class="inline-flex items-center gap-2">
+            <Icon name="shield-check" class="h-4 w-4" />
+            GitHub Pages
+          </li>
+        </ul>
+      </div>
+    </div>
+    <p class="mt-10 text-xs text-slate-500 dark:text-slate-400">
+      Built with care by the Siderust community.
+    </p>
+  </div>
+</footer>

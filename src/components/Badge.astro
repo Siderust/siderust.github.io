@@ -1,0 +1,10 @@
+---
+import Icon from './Icon.astro';
+
+const { label, icon, class: className = '' } = Astro.props;
+---
+
+<span class={`chip ${className}`}>
+  {icon ? <Icon name={icon} class="h-3 w-3" /> : null}
+  <span>{label}</span>
+</span>
