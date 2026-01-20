@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1f2937"/>
+      <stop offset="100%" style="stop-color:#111827"/>
+    </linearGradient>
+    <linearGradient id="text-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ed7712"/>
+      <stop offset="100%" style="stop-color:#df614e"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg-grad)"/>
+  
+  <!-- Grid pattern -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  </pattern>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  
+  <!-- Decorative orbs -->
+  <circle cx="200" cy="150" r="200" fill="#ed7712" opacity="0.1"/>
+  <circle cx="1000" cy="500" r="250" fill="#df614e" opacity="0.1"/>
+  
+  <!-- Gear icon -->
+  <g transform="translate(600, 260)" fill="url(#text-grad)">
+    <circle cx="0" cy="0" r="60" fill="none" stroke="url(#text-grad)" stroke-width="12"/>
+    <circle cx="0" cy="0" r="20" fill="url(#text-grad)"/>
+    <rect x="-15" y="-100" width="30" height="30" rx="5"/>
+    <rect x="-15" y="70" width="30" height="30" rx="5"/>
+    <rect x="-100" y="-15" width="30" height="30" rx="5"/>
+    <rect x="70" y="-15" width="30" height="30" rx="5"/>
+    <g transform="rotate(45)">
+      <rect x="-15" y="-100" width="30" height="30" rx="5"/>
+      <rect x="-15" y="70" width="30" height="30" rx="5"/>
+      <rect x="-100" y="-15" width="30" height="30" rx="5"/>
+      <rect x="70" y="-15" width="30" height="30" rx="5"/>
+    </g>
+  </g>
+  
+  <!-- Text -->
+  <text x="600" y="440" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="bold" fill="url(#text-grad)">Siderust</text>
+  <text x="600" y="500" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#9ca3af">Building robust Rust libraries</text>
+  
+  <!-- URL -->
+  <text x="600" y="580" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#6b7280">siderust.github.io</text>
+</svg>

@@ -1,0 +1,73 @@
+---
+/**
+ * SEO Component
+ * 
+ * Handles all SEO-related meta tags, Open Graph, and Twitter cards.
+ */
+import siteConfig from '../site.config';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  canonical?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = siteConfig.description,
+  image = siteConfig.ogImage,
+  canonical,
+  type = 'website',
+  noindex = false,
+} = Astro.props;
+
+// Build the full title
+const fullTitle = title 
+  ? `${title} | ${siteConfig.name}` 
+  : `${siteConfig.name} - ${siteConfig.tagline}`;
+
+// Build canonical URL
+const canonicalURL = canonical 
+  ? new URL(canonical, siteConfig.siteUrl).href 
+  : new URL(Astro.url.pathname, siteConfig.siteUrl).href;
+
+// Build OG image URL
+const ogImageURL = image?.startsWith('http') 
+  ? image 
+  : new URL(image || '/og-image.png', siteConfig.siteUrl).href;
+---
+
+<!-- Primary Meta Tags -->
+<title>{fullTitle}</title>
+<meta name="title" content={fullTitle} />
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalURL} />
+
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content={type} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={ogImageURL} />
+<meta property="og:site_name" content={siteConfig.name} />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content={canonicalURL} />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageURL} />
+{siteConfig.twitter && <meta name="twitter:site" content={`@${siteConfig.twitter}`} />}
+
+<!-- Additional SEO -->
+<meta name="author" content={siteConfig.name} />
+<meta name="generator" content={Astro.generator} />
+
+<!-- Theme Color for browser UI -->
+<meta name="theme-color" content="#ed7712" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#1f2937" media="(prefers-color-scheme: dark)" />

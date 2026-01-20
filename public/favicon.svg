@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ed7712"/>
+      <stop offset="100%" style="stop-color:#df614e"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="20" fill="url(#grad)"/>
+  <g fill="white" transform="translate(50, 50)">
+    <!-- Gear icon -->
+    <path d="M-8 -28h16v8h-16zM-8 20h16v8h-16zM-28 -8v16h8v-16zM20 -8v16h8v-16z" opacity="0.9"/>
+    <circle cx="0" cy="0" r="16" fill="none" stroke="white" stroke-width="6"/>
+    <circle cx="0" cy="0" r="6" fill="white"/>
+    <!-- Rust-inspired teeth -->
+    <g transform="rotate(45)">
+      <path d="M-8 -28h16v8h-16zM-8 20h16v8h-16zM-28 -8v16h8v-16zM20 -8v16h8v-16z" opacity="0.9"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,66 @@
+---
+/**
+ * Base Layout
+ * 
+ * The main layout wrapper for all pages.
+ */
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import SEO from '../components/SEO.astro';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  canonical?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+}
+
+const props = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <SEO {...props} />
+    
+    <!-- Prevent FOUC for dark mode -->
+    <script is:inline>
+      const getTheme = () => {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+          return localStorage.getItem('theme');
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      };
+      
+      if (getTheme() === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <a 
+      href="#main-content" 
+      class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-brand-600 focus:text-white focus:rounded-lg"
+    >
+      Skip to main content
+    </a>
+    
+    <Header currentPath={currentPath} />
+    
+    <main id="main-content" class="flex-1">
+      <slot />
+    </main>
+    
+    <Footer />
+  </body>
+</html>

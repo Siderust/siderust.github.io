@@ -1,0 +1,23 @@
+{
+  "name": "siderust-website",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Official website for the Siderust organization and its projects",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/tailwind": "^5.1.3",
+    "astro": "^4.16.18",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0"
+  }
+}
