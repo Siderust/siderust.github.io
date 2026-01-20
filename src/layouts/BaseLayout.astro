@@ -10,7 +10,8 @@ const { title, description, image, canonical } = Astro.props;
 const siteName = config.org.name;
 const pageTitle = title ? `${title} · ${siteName}` : `${siteName} · ${config.org.tagline}`;
 const pageDescription = clampText(description ?? config.org.description, 180);
-const siteUrl = (Astro.site ?? config.siteUrl) as string;
+const siteUrlValue = Astro.site ?? config.siteUrl;
+const siteUrl = siteUrlValue instanceof URL ? siteUrlValue.toString() : siteUrlValue;
 const canonicalUrl = canonical
   ? new URL(canonical, siteUrl).toString()
   : new URL(Astro.url.pathname, siteUrl).toString();
