@@ -47,6 +47,8 @@ export interface SiteConfig {
   twitter?: string;
   /** Default Open Graph image path */
   ogImage?: string;
+  /** Logo image path */
+  logo?: string;
   /** List of projects/crates */
   projects: ProjectConfig[];
   /** Organization mission statement */
@@ -65,78 +67,85 @@ const siteConfig: SiteConfig = {
   name: 'Siderust',
   org: 'Siderust',
   orgUrl: 'https://github.com/Siderust',
-  tagline: 'Building robust Rust libraries for the modern developer',
-  description: 'Siderust is an open-source organization dedicated to creating high-quality, well-documented Rust crates that solve real problems. Our libraries focus on performance, safety, and developer experience.',
+  tagline: 'Precision astronomy & orbit analysis libraries for embedded and research systems',
+  description: 'Siderust builds mission-critical astronomical computation and physical modeling libraries in pure Rust. From embedded spacecraft flight software to research-grade pipelines, validated against authoritative ephemerides, zero unsafe code, zero hidden allocations.',
   siteUrl: 'https://siderust.github.io',
   ogImage: '/og-image.svg',
+  logo: '/logo.webp',
   
-  mission: 'To advance the Rust ecosystem by building reliable, performant, and ergonomic libraries that empower developers to build better software.',
+  mission: 'Siderust aims to be the reference ephemeris and orbit‑analysis library for embedded flight‑software as well as research‐grade pipelines. Every algorithm ships with validation tests against authoritative data (JPL Horizons, IMCCE, SOFA). No unsafe blocks, no hidden allocations.',
   
   values: [
-    'Quality over quantity - we ship when it\'s ready',
+    'Correctness first — every algorithm validated against JPL Horizons, IMCCE, and SOFA',
+    'Zero unsafe code, zero hidden allocations — suitable for bare-metal and real-time systems',
+    'Type-level guarantees — reference frames and units encoded in the type system',
+    'Reproducible science — deterministic builds and comprehensive benchmarks',
     'Documentation as a first-class citizen',
-    'Performance without sacrificing usability',
-    'Open source and community-driven',
-    'Semantic versioning and stability guarantees',
   ],
 
   projects: [
     {
       repo: 'siderust',
       name: 'Siderust',
-      description: 'The core Siderust library providing foundational utilities and patterns for Rust development.',
+      description: 'Precision ephemeris and celestial mechanics library for embedded flight software and research pipelines.',
       status: 'active',
       featured: true,
-      purpose: 'Siderust serves as the foundation for our ecosystem, providing common utilities, patterns, and abstractions that other crates in the organization build upon.',
+      purpose: 'Siderust provides validated astronomical computations for spacecraft navigation, observatory planning, and scientific research. Every algorithm is tested against JPL Horizons, IMCCE, and SOFA data.',
       features: [
-        'Zero-cost abstractions',
-        'Comprehensive documentation',
-        'Extensive test coverage',
-        'No unsafe code by default',
+        'VSOP87 & ELP2000 planetary/lunar ephemerides',
+        'Type-safe coordinate systems (ICRS, Ecliptic, Topocentric)',
+        'No unsafe blocks, no hidden allocations',
+        'Validated against authoritative data',
       ],
       gettingStarted: `# Add to your Cargo.toml
 [dependencies]
 siderust = "0.1"
 
-# In your code
-use siderust::prelude::*;`,
-      tags: ['core', 'utilities', 'rust'],
+# Compute Mars position
+use siderust::{
+    bodies::Mars,
+    astro::JulianDate,
+};
+use chrono::Utc;
+
+let jd = JulianDate::from_utc(Utc::now());
+let mars = Mars::vsop87e(jd);
+println!("{}", mars.position);`,
+      tags: ['astronomy', 'ephemeris', 'celestial-mechanics', 'space', 'rust'],
     },
     {
       repo: 'qtty',
       name: 'qtty',
-      description: 'A modern, type-safe terminal UI library for building beautiful command-line applications in Rust.',
-      status: 'experimental',
+      description: 'Strongly typed physical quantities with compile-time dimensional analysis.',
+      status: 'stable',
       featured: true,
-      purpose: 'qtty aims to make building terminal user interfaces in Rust as pleasant as building web UIs, with a focus on type safety and ergonomics.',
+      purpose: 'qtty provides dimensional quantities (Length, Angle, Mass, Time, Velocity, etc.) with operator overloading and compile-time unit checking. Powers Siderust\'s physical computations.',
       features: [
-        'Declarative UI components',
-        'Cross-platform support',
-        'Rich styling options',
-        'Async-first design',
+        'Compile-time dimensional analysis',
+        'Zero-cost abstractions',
+        'SI and astronomical units',
+        'No-std compatible',
       ],
       gettingStarted: `# Add to your Cargo.toml
 [dependencies]
 qtty = "0.1"
 
-# Build a simple TUI
-use qtty::prelude::*;
+# Use physical quantities
+use qtty::{AU, KM, DAY};
 
-fn main() -> Result<()> {
-    let app = App::new()
-        .title("My App")
-        .build()?;
-    app.run()
-}`,
-      tags: ['tui', 'terminal', 'ui', 'rust'],
+let distance = 1.523 * AU;  // Mars semi-major axis
+let period = 686.97 * DAY;
+let speed = distance / period;  // Compiler validates dimensions`,
+      tags: ['units', 'physics', 'dimensional-analysis', 'astronomy', 'rust'],
     },
     {
       repo: 'affn',
       name: 'affn',
-      description: 'Affine transformations and geometric primitives for Rust, optimized for graphics and game development.',
+      description: 'Compile-time safe affine coordinate transformations with reference frame tracking.',
       status: 'stable',
       featured: true,
-      purpose: 'affn provides efficient, ergonomic APIs for working with 2D and 3D transformations, making graphics programming in Rust more accessible.',
+      purpose: 'affn powers Siderust\'s coordinate system, encoding reference frames and centers in the type system. Prevents mixing incompatible coordinate systems at compile time.',
+
       features: [
         'SIMD-optimized operations',
         'Const-friendly APIs',

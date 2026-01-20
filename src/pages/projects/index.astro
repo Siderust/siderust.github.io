@@ -23,19 +23,20 @@ const statuses = [...new Set(allProjects.map(p => p.status))];
   description="Explore all Siderust projects and Rust crates. High-quality, well-documented libraries for the modern developer."
 >
   <!-- Header Section -->
-  <section class="py-16 md:py-20 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+  <section class="pt-16 pb-8 md:pt-20 md:pb-10 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
     <div class="container-custom">
-      <div class="max-w-3xl">
+      <div class="max-w-4xl">
         <h1 class="section-heading">Projects</h1>
         <p class="section-subheading">
-          Explore our collection of Rust crates. Each project is built with care, thoroughly documented, and ready for production use.
+          Explore our ecosystem of mission-critical astronomical computation libraries.
         </p>
+        
       </div>
     </div>
   </section>
 
   <!-- Filters & Projects Section -->
-  <section class="py-12 md:py-16 bg-white dark:bg-gray-950">
+  <section class="pt-8 pb-12 md:pt-10 md:pb-16 bg-white dark:bg-gray-950">
     <div class="container-custom">
       <!-- Filters -->
       <div id="filters" class="mb-8 p-4 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
@@ -159,6 +160,7 @@ const statuses = [...new Set(allProjects.map(p => p.status))];
           Reset filters
         </button>
       </div>
+
     </div>
   </section>
 </Layout>

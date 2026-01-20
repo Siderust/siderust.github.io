@@ -29,9 +29,30 @@ import siteConfig from '../site.config';
     <div class="container-custom">
       <div class="max-w-3xl">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Our Mission</h2>
-        <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-          {siteConfig.mission || `${siteConfig.name} is dedicated to advancing the Rust ecosystem by creating high-quality, well-documented libraries that solve real-world problems. We believe in the power of open source and community-driven development.`}
+        <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
+          {siteConfig.mission}
         </p>
+        <div class="bg-gradient-to-r from-brand-50 to-rust-50 dark:from-brand-950/30 dark:to-rust-950/30 border-l-4 border-brand-500 p-6 rounded-r-lg">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Who We Serve</h3>
+          <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+            <li class="flex items-start gap-2">
+              <span class="text-brand-500 mt-1">•</span>
+              <span><strong>Spacecraft engineers</strong> building autonomous navigation and guidance systems</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand-500 mt-1">•</span>
+              <span><strong>Observatory operators</strong> planning observations and tracking celestial targets</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand-500 mt-1">•</span>
+              <span><strong>Researchers</strong> requiring reproducible, validated astronomical computations</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand-500 mt-1">•</span>
+              <span><strong>Embedded systems developers</strong> needing deterministic, allocation-free libraries</span>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </section>
@@ -61,43 +82,60 @@ import siteConfig from '../site.config';
   <section class="py-12 md:py-16 bg-white dark:bg-gray-950">
     <div class="container-custom">
       <div class="max-w-3xl">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">What We Do</h2>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">What We Build</h2>
         <div class="prose prose-gray dark:prose-invert max-w-none">
           <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-            We maintain a collection of Rust crates that focus on:
+            Our libraries provide mission-critical astronomical computation with an uncompromising focus on:
           </p>
           <ul class="space-y-3">
             <li class="flex items-start gap-3">
               <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              <span class="text-gray-600 dark:text-gray-400"><strong class="text-gray-900 dark:text-white">Performance</strong> — Zero-cost abstractions and SIMD optimizations where they matter</span>
+              <span class="text-gray-600 dark:text-gray-400"><strong class="text-gray-900 dark:text-white">Validation</strong> — Every algorithm tested against JPL Horizons, IMCCE, and SOFA authoritative ephemerides with published accuracy metrics</span>
             </li>
             <li class="flex items-start gap-3">
               <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              <span class="text-gray-600 dark:text-gray-400"><strong class="text-gray-900 dark:text-white">Ergonomics</strong> — APIs that feel natural and are hard to misuse</span>
+              <span class="text-gray-600 dark:text-gray-400"><strong class="text-gray-900 dark:text-white">Safety Guarantees</strong> — Zero unsafe blocks, zero hidden allocations. Suitable for bare-metal embedded systems and real-time flight software</span>
             </li>
             <li class="flex items-start gap-3">
               <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              <span class="text-gray-600 dark:text-gray-400"><strong class="text-gray-900 dark:text-white">Documentation</strong> — Comprehensive docs, examples, and guides for every feature</span>
+              <span class="text-gray-600 dark:text-gray-400"><strong class="text-gray-900 dark:text-white">Type-Level Correctness</strong> — Reference frames (ICRS, Ecliptic, Topocentric), coordinate centers (Helio, Geo, Bary), and physical units encoded in types—impossible states don't compile</span>
             </li>
             <li class="flex items-start gap-3">
               <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              <span class="text-gray-600 dark:text-gray-400"><strong class="text-gray-900 dark:text-white">Stability</strong> — Semantic versioning and careful deprecation practices</span>
+              <span class="text-gray-600 dark:text-gray-400"><strong class="text-gray-900 dark:text-white">Reproducibility</strong> — Deterministic builds, pinned algorithm versions, comprehensive benchmarks, and no platform-dependent behavior</span>
             </li>
             <li class="flex items-start gap-3">
               <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              <span class="text-gray-600 dark:text-gray-400"><strong class="text-gray-900 dark:text-white">Safety</strong> — Minimal unsafe code, with thorough auditing when necessary</span>
+              <span class="text-gray-600 dark:text-gray-400"><strong class="text-gray-900 dark:text-white">Performance</strong> — SIMD auto-vectorization, zero-cost abstractions, and optimized numerical kernels (VSOP87, ELP2000) benchmarked at &lt;200ns per evaluation</span>
             </li>
           </ul>
+        </div>
+        <div class="mt-8 p-6 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Our Ecosystem</h3>
+          <div class="space-y-3 text-sm">
+            <div>
+              <a href="https://github.com/Siderust/siderust" target="_blank" rel="noopener noreferrer" class="font-mono text-brand-600 dark:text-brand-400 hover:underline">siderust</a>
+              <span class="text-gray-600 dark:text-gray-400"> — Ephemeris and celestial mechanics (VSOP87, ELP2000, Kepler solvers)</span>
+            </div>
+            <div>
+              <a href="https://github.com/Siderust/affn" target="_blank" rel="noopener noreferrer" class="font-mono text-brand-600 dark:text-brand-400 hover:underline">affn</a>
+              <span class="text-gray-600 dark:text-gray-400"> — Affine transformations with compile-time reference frame safety</span>
+            </div>
+            <div>
+              <a href="https://github.com/Siderust/qtty" target="_blank" rel="noopener noreferrer" class="font-mono text-brand-600 dark:text-brand-400 hover:underline">qtty</a>
+              <span class="text-gray-600 dark:text-gray-400"> — Physical quantities with dimensional analysis (Length, Angle, Mass, Time, etc.)</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
