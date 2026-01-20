@@ -1,0 +1,1341 @@
+---
+/**
+ * Interactive Demo Page
+ * 
+ * Client-side demonstrations of Siderust's capabilities:
+ * - Coordinate conversions
+ * - Time conversions
+ * - Solar system explorer
+ */
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout 
+  title="Interactive Demo"
+  description="Explore Siderust's ephemeris and coordinate transformation capabilities with this interactive demo. Convert coordinates, times, and explore the solar system."
+>
+  <!-- Header Section -->
+  <section class="py-12 md:py-16 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+    <div class="container-custom">
+      <div class="max-w-3xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 text-sm font-medium mb-4">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Interactive Demo
+        </div>
+        <h1 class="section-heading">Explore Siderust</h1>
+        <p class="section-subheading">
+          Experience the power of Siderust's ephemeris and coordinate transformation algorithms. 
+          All calculations run client-side, demonstrating the precision you can expect from the library.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navigation Tabs -->
+  <section class="sticky top-16 z-40 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
+    <div class="container-custom">
+      <nav class="flex gap-1 py-2 overflow-x-auto no-scrollbar" aria-label="Demo sections">
+        <button
+          type="button"
+          data-tab="coordinates"
+          class="demo-tab px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400"
+        >
+          Coordinate Conversions
+        </button>
+        <button
+          type="button"
+          data-tab="time"
+          class="demo-tab px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+          Time Conversions
+        </button>
+        <button
+          type="button"
+          data-tab="solar-system"
+          class="demo-tab px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+          Solar System Explorer
+        </button>
+      </nav>
+    </div>
+  </section>
+
+  <!-- Coordinate Conversions Section -->
+  <section id="coordinates-section" class="demo-section py-12 md:py-16 bg-white dark:bg-gray-950">
+    <div class="container-custom">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Coordinate Conversions</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-8">
+          Convert between different coordinate systems used in astronomy and astrodynamics.
+        </p>
+
+        <div class="grid lg:grid-cols-2 gap-8">
+          <!-- Cartesian <-> Spherical -->
+          <div class="card p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Cartesian ↔ Spherical</h3>
+            
+            <div class="space-y-4">
+              <div>
+                <label for="cart-x" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  X (km)
+                </label>
+                <input
+                  type="number"
+                  id="cart-x"
+                  value="6378.137"
+                  step="0.001"
+                  class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label for="cart-y" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Y (km)
+                </label>
+                <input
+                  type="number"
+                  id="cart-y"
+                  value="0"
+                  step="0.001"
+                  class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label for="cart-z" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Z (km)
+                </label>
+                <input
+                  type="number"
+                  id="cart-z"
+                  value="0"
+                  step="0.001"
+                  class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  id="cart-to-sph"
+                  class="flex-1 btn-primary text-sm"
+                >
+                  → Spherical
+                </button>
+                <button
+                  type="button"
+                  id="sph-to-cart"
+                  class="flex-1 btn-secondary text-sm"
+                >
+                  ← Cartesian
+                </button>
+              </div>
+
+              <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
+                <div>
+                  <label for="sph-r" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Radius (km)
+                  </label>
+                  <input
+                    type="number"
+                    id="sph-r"
+                    value="6378.137"
+                    step="0.001"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label for="sph-theta" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Azimuth θ (deg)
+                  </label>
+                  <input
+                    type="number"
+                    id="sph-theta"
+                    value="0"
+                    step="0.001"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label for="sph-phi" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Elevation φ (deg)
+                  </label>
+                  <input
+                    type="number"
+                    id="sph-phi"
+                    value="0"
+                    step="0.001"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Celestial Coordinate Systems -->
+          <div class="card p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Celestial Coordinates</h3>
+            
+            <div class="space-y-4">
+              <div>
+                <label for="coord-system" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Coordinate System
+                </label>
+                <select
+                  id="coord-system"
+                  class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                >
+                  <option value="equatorial">Equatorial (RA/Dec)</option>
+                  <option value="ecliptic">Ecliptic (λ/β)</option>
+                  <option value="galactic">Galactic (l/b)</option>
+                  <option value="horizontal">Horizontal (Az/Alt)</option>
+                </select>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label for="coord-lon" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <span id="coord-lon-label">RA (h:m:s)</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="coord-lon"
+                    value="12:30:00"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label for="coord-lat" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <span id="coord-lat-label">Dec (°:′:″)</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="coord-lat"
+                    value="+45:00:00"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label for="target-system" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Convert to
+                </label>
+                <select
+                  id="target-system"
+                  class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                >
+                  <option value="ecliptic">Ecliptic (λ/β)</option>
+                  <option value="equatorial">Equatorial (RA/Dec)</option>
+                  <option value="galactic">Galactic (l/b)</option>
+                  <option value="horizontal">Horizontal (Az/Alt)</option>
+                </select>
+              </div>
+
+              <!-- Observer location for horizontal coords -->
+              <div id="observer-location" class="hidden space-y-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Observer Location (for Horizontal)</p>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label for="obs-lat" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Latitude (°)
+                    </label>
+                    <input
+                      type="number"
+                      id="obs-lat"
+                      value="51.4772"
+                      step="0.0001"
+                      class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label for="obs-lon" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Longitude (°)
+                    </label>
+                    <input
+                      type="number"
+                      id="obs-lon"
+                      value="0.0"
+                      step="0.0001"
+                      class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <button
+                type="button"
+                id="convert-coords"
+                class="w-full btn-primary"
+              >
+                Convert Coordinates
+              </button>
+
+              <!-- Result -->
+              <div id="coord-result" class="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 hidden">
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Result:</p>
+                <p id="coord-result-text" class="font-mono text-brand-600 dark:text-brand-400"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Time Conversions Section -->
+  <section id="time-section" class="demo-section py-12 md:py-16 bg-gray-50 dark:bg-gray-900/50 hidden">
+    <div class="container-custom">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Time Conversions</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-8">
+          Convert between different time systems used in astronomy and space applications.
+        </p>
+
+        <div class="grid lg:grid-cols-2 gap-8">
+          <!-- UTC Input -->
+          <div class="card p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">UTC Date & Time</h3>
+            
+            <div class="space-y-4">
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <label for="utc-year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Year
+                  </label>
+                  <input
+                    type="number"
+                    id="utc-year"
+                    value="2024"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label for="utc-month" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Month
+                  </label>
+                  <input
+                    type="number"
+                    id="utc-month"
+                    min="1"
+                    max="12"
+                    value="6"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label for="utc-day" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Day
+                  </label>
+                  <input
+                    type="number"
+                    id="utc-day"
+                    min="1"
+                    max="31"
+                    value="21"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <label for="utc-hour" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Hour
+                  </label>
+                  <input
+                    type="number"
+                    id="utc-hour"
+                    min="0"
+                    max="23"
+                    value="12"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label for="utc-min" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Minute
+                  </label>
+                  <input
+                    type="number"
+                    id="utc-min"
+                    min="0"
+                    max="59"
+                    value="0"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label for="utc-sec" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Second
+                  </label>
+                  <input
+                    type="number"
+                    id="utc-sec"
+                    min="0"
+                    max="59.999"
+                    step="0.001"
+                    value="0"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              
+              <button
+                type="button"
+                id="use-now"
+                class="w-full btn-ghost text-sm"
+              >
+                Use Current Time
+              </button>
+              
+              <button
+                type="button"
+                id="convert-time"
+                class="w-full btn-primary"
+              >
+                Convert Time
+              </button>
+            </div>
+          </div>
+
+          <!-- Time Results -->
+          <div class="card p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Converted Values</h3>
+            
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Julian Date (JD)
+                </label>
+                <div class="flex gap-2">
+                  <input
+                    type="text"
+                    id="result-jd"
+                    readonly
+                    value="2460482.0"
+                    class="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white font-mono"
+                  />
+                  <button type="button" class="copy-time-btn btn-ghost p-2" data-target="result-jd" title="Copy">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Modified Julian Date (MJD)
+                </label>
+                <div class="flex gap-2">
+                  <input
+                    type="text"
+                    id="result-mjd"
+                    readonly
+                    value="60481.5"
+                    class="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white font-mono"
+                  />
+                  <button type="button" class="copy-time-btn btn-ghost p-2" data-target="result-mjd" title="Copy">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Unix Timestamp (seconds)
+                </label>
+                <div class="flex gap-2">
+                  <input
+                    type="text"
+                    id="result-unix"
+                    readonly
+                    value="1718971200"
+                    class="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white font-mono"
+                  />
+                  <button type="button" class="copy-time-btn btn-ghost p-2" data-target="result-unix" title="Copy">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Day of Year
+                </label>
+                <input
+                  type="text"
+                  id="result-doy"
+                  readonly
+                  value="173"
+                  class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white font-mono"
+                />
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  ISO 8601 Format
+                </label>
+                <input
+                  type="text"
+                  id="result-iso"
+                  readonly
+                  value="2024-06-21T12:00:00.000Z"
+                  class="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-white font-mono text-sm"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Time Reference Info -->
+        <div class="mt-8 p-6 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+          <h4 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">About Astronomical Time Systems</h4>
+          <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+            <li><strong>JD (Julian Date)</strong>: Days since January 1, 4713 BC at noon. Used extensively in astronomy.</li>
+            <li><strong>MJD (Modified Julian Date)</strong>: JD - 2400000.5. Starts at midnight, smaller numbers.</li>
+            <li><strong>Unix Timestamp</strong>: Seconds since January 1, 1970 00:00:00 UTC.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Solar System Section -->
+  <section id="solar-system-section" class="demo-section py-12 md:py-16 bg-white dark:bg-gray-950 hidden">
+    <div class="container-custom">
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Solar System Explorer</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-8">
+          Explore the planets of our solar system with real-time position calculations based on JPL ephemeris algorithms.
+        </p>
+
+        <!-- Current Time Display -->
+        <div class="card p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Current Julian Date</p>
+            <p id="current-jd" class="text-2xl font-mono font-bold text-brand-600 dark:text-brand-400">2460482.0</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">UTC Time</p>
+            <p id="current-utc" class="text-lg font-mono text-gray-900 dark:text-white">2024-06-21 12:00:00</p>
+          </div>
+          <button
+            type="button"
+            id="refresh-positions"
+            class="btn-primary"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Update Positions
+          </button>
+        </div>
+
+        <!-- Planet Cards -->
+        <div id="planet-grid" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Planet cards will be generated by JavaScript -->
+        </div>
+
+        <!-- Selected Planet Details -->
+        <div id="planet-details" class="mt-8 card p-6 hidden">
+          <h3 id="detail-name" class="text-xl font-bold text-gray-900 dark:text-white mb-4">Mercury</h3>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div>
+              <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-3">Physical Properties</h4>
+              <dl class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 dark:text-gray-400">Mass</dt>
+                  <dd id="detail-mass" class="font-mono text-gray-900 dark:text-white">3.302×10²³ kg</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 dark:text-gray-400">Radius</dt>
+                  <dd id="detail-radius" class="font-mono text-gray-900 dark:text-white">2,439.7 km</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 dark:text-gray-400">Gravity</dt>
+                  <dd id="detail-gravity" class="font-mono text-gray-900 dark:text-white">3.7 m/s²</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 dark:text-gray-400">Day Length</dt>
+                  <dd id="detail-day" class="font-mono text-gray-900 dark:text-white">58.6 days</dd>
+                </div>
+              </dl>
+            </div>
+            <div>
+              <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-3">Orbital Elements</h4>
+              <dl class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 dark:text-gray-400">Semi-major Axis</dt>
+                  <dd id="detail-sma" class="font-mono text-gray-900 dark:text-white">0.387 AU</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 dark:text-gray-400">Eccentricity</dt>
+                  <dd id="detail-ecc" class="font-mono text-gray-900 dark:text-white">0.2056</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 dark:text-gray-400">Inclination</dt>
+                  <dd id="detail-inc" class="font-mono text-gray-900 dark:text-white">7.00°</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 dark:text-gray-400">Orbital Period</dt>
+                  <dd id="detail-period" class="font-mono text-gray-900 dark:text-white">88 days</dd>
+                </div>
+              </dl>
+            </div>
+            <div>
+              <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-3">Current Position</h4>
+              <dl class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 dark:text-gray-400">Distance from Sun</dt>
+                  <dd id="detail-distance" class="font-mono text-gray-900 dark:text-white">0.42 AU</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 dark:text-gray-400">Helio. Longitude</dt>
+                  <dd id="detail-hlon" class="font-mono text-gray-900 dark:text-white">125.3°</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 dark:text-gray-400">Helio. Latitude</dt>
+                  <dd id="detail-hlat" class="font-mono text-gray-900 dark:text-white">3.2°</dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 dark:text-gray-400">Velocity</dt>
+                  <dd id="detail-velocity" class="font-mono text-gray-900 dark:text-white">47.4 km/s</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <!-- Solar System Diagram -->
+        <div class="mt-8">
+          <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Orbital Diagram (Top View)</h3>
+          <div class="card p-4">
+            <div class="aspect-square max-w-2xl mx-auto">
+              <svg id="orbit-diagram" viewBox="-250 -250 500 500" class="w-full h-full">
+                <!-- Sun -->
+                <circle cx="0" cy="0" r="10" fill="#FDB813" />
+                <!-- Orbits and planets will be drawn by JavaScript -->
+              </svg>
+            </div>
+            <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+              Inner solar system view (Mercury to Mars). Not to scale.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-12 md:py-16 bg-gray-50 dark:bg-gray-900/50">
+    <div class="container-custom">
+      <div class="max-w-2xl mx-auto text-center">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Ready to use Siderust?</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-6">
+          These demos showcase a fraction of Siderust's capabilities. The full library provides research-grade 
+          precision validated against JPL Horizons, IMCCE, and SOFA.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a href="/projects/siderust" class="btn-primary">
+            Learn More
+          </a>
+          <a href="https://github.com/Siderust/siderust" target="_blank" rel="noopener noreferrer" class="btn-secondary">
+            View on GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<script is:inline>
+  // =============================================================================
+  // DEMO PAGE JAVASCRIPT
+  // =============================================================================
+
+  // Constants
+  const DEG_TO_RAD = Math.PI / 180;
+  const RAD_TO_DEG = 180 / Math.PI;
+  const AU_TO_KM = 149597870.7;
+  const J2000 = 2451545.0; // JD for J2000.0 epoch
+  const OBLIQUITY_J2000 = 23.439291111; // Mean obliquity at J2000.0 in degrees
+
+  // Planet data
+  const PLANETS = [
+    {
+      name: 'Mercury',
+      symbol: '☿',
+      color: '#B5B5B5',
+      mass: '3.302×10²³ kg',
+      radius: '2,439.7 km',
+      gravity: '3.7 m/s²',
+      dayLength: '58.6 days',
+      sma: 0.38710,
+      ecc: 0.20563,
+      inc: 7.005,
+      period: 87.97,
+      orbitColor: '#9CA3AF'
+    },
+    {
+      name: 'Venus',
+      symbol: '♀',
+      color: '#E6B87D',
+      mass: '4.869×10²⁴ kg',
+      radius: '6,051.8 km',
+      gravity: '8.87 m/s²',
+      dayLength: '243 days',
+      sma: 0.72333,
+      ecc: 0.00677,
+      inc: 3.395,
+      period: 224.7,
+      orbitColor: '#F59E0B'
+    },
+    {
+      name: 'Earth',
+      symbol: '⊕',
+      color: '#6B93D6',
+      mass: '5.972×10²⁴ kg',
+      radius: '6,371 km',
+      gravity: '9.81 m/s²',
+      dayLength: '24 hours',
+      sma: 1.00000,
+      ecc: 0.01671,
+      inc: 0.000,
+      period: 365.25,
+      orbitColor: '#3B82F6'
+    },
+    {
+      name: 'Mars',
+      symbol: '♂',
+      color: '#C1440E',
+      mass: '6.417×10²³ kg',
+      radius: '3,389.5 km',
+      gravity: '3.71 m/s²',
+      dayLength: '24.6 hours',
+      sma: 1.52368,
+      ecc: 0.09341,
+      inc: 1.850,
+      period: 687.0,
+      orbitColor: '#EF4444'
+    },
+    {
+      name: 'Jupiter',
+      symbol: '♃',
+      color: '#D4A574',
+      mass: '1.898×10²⁷ kg',
+      radius: '69,911 km',
+      gravity: '24.79 m/s²',
+      dayLength: '9.9 hours',
+      sma: 5.2026,
+      ecc: 0.04839,
+      inc: 1.303,
+      period: 4332.6,
+      orbitColor: '#D97706'
+    },
+    {
+      name: 'Saturn',
+      symbol: '♄',
+      color: '#F4D59E',
+      mass: '5.683×10²⁶ kg',
+      radius: '58,232 km',
+      gravity: '10.44 m/s²',
+      dayLength: '10.7 hours',
+      sma: 9.5549,
+      ecc: 0.05415,
+      inc: 2.489,
+      period: 10759.2,
+      orbitColor: '#FBBF24'
+    },
+    {
+      name: 'Uranus',
+      symbol: '⛢',
+      color: '#D1E7E7',
+      mass: '8.681×10²⁵ kg',
+      radius: '25,362 km',
+      gravity: '8.87 m/s²',
+      dayLength: '17.2 hours',
+      sma: 19.2184,
+      ecc: 0.04717,
+      inc: 0.773,
+      period: 30688.5,
+      orbitColor: '#06B6D4'
+    },
+    {
+      name: 'Neptune',
+      symbol: '♆',
+      color: '#5B5DDF',
+      mass: '1.024×10²⁶ kg',
+      radius: '24,622 km',
+      gravity: '11.15 m/s²',
+      dayLength: '16.1 hours',
+      sma: 30.1104,
+      ecc: 0.00859,
+      inc: 1.770,
+      period: 60182,
+      orbitColor: '#4F46E5'
+    }
+  ];
+
+  // =============================================================================
+  // TIME FUNCTIONS
+  // =============================================================================
+
+  function utcToJD(year, month, day, hour, min, sec) {
+    // Algorithm from Astronomical Algorithms by Jean Meeus
+    if (month <= 2) {
+      year -= 1;
+      month += 12;
+    }
+    
+    const A = Math.floor(year / 100);
+    const B = 2 - A + Math.floor(A / 4);
+    
+    const JD = Math.floor(365.25 * (year + 4716)) +
+               Math.floor(30.6001 * (month + 1)) +
+               day + B - 1524.5 +
+               (hour + min / 60 + sec / 3600) / 24;
+    
+    return JD;
+  }
+
+  function jdToUTC(jd) {
+    const Z = Math.floor(jd + 0.5);
+    const F = jd + 0.5 - Z;
+    
+    let A;
+    if (Z < 2299161) {
+      A = Z;
+    } else {
+      const alpha = Math.floor((Z - 1867216.25) / 36524.25);
+      A = Z + 1 + alpha - Math.floor(alpha / 4);
+    }
+    
+    const B = A + 1524;
+    const C = Math.floor((B - 122.1) / 365.25);
+    const D = Math.floor(365.25 * C);
+    const E = Math.floor((B - D) / 30.6001);
+    
+    const day = B - D - Math.floor(30.6001 * E);
+    const month = E < 14 ? E - 1 : E - 13;
+    const year = month > 2 ? C - 4716 : C - 4715;
+    
+    const dayFrac = F * 24;
+    const hour = Math.floor(dayFrac);
+    const minFrac = (dayFrac - hour) * 60;
+    const min = Math.floor(minFrac);
+    const sec = (minFrac - min) * 60;
+    
+    return { year, month, day, hour, min, sec };
+  }
+
+  function jdToMJD(jd) {
+    return jd - 2400000.5;
+  }
+
+  function jdToUnix(jd) {
+    return (jd - 2440587.5) * 86400;
+  }
+
+  function getDayOfYear(year, month, day) {
+    const date = new Date(year, month - 1, day);
+    const start = new Date(year, 0, 0);
+    const diff = date - start;
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+  }
+
+  // =============================================================================
+  // COORDINATE FUNCTIONS
+  // =============================================================================
+
+  function cartesianToSpherical(x, y, z) {
+    const r = Math.sqrt(x * x + y * y + z * z);
+    const theta = Math.atan2(y, x) * RAD_TO_DEG;
+    const phi = Math.asin(z / r) * RAD_TO_DEG;
+    return { r, theta, phi };
+  }
+
+  function sphericalToCartesian(r, theta, phi) {
+    const thetaRad = theta * DEG_TO_RAD;
+    const phiRad = phi * DEG_TO_RAD;
+    const x = r * Math.cos(phiRad) * Math.cos(thetaRad);
+    const y = r * Math.cos(phiRad) * Math.sin(thetaRad);
+    const z = r * Math.sin(phiRad);
+    return { x, y, z };
+  }
+
+  function parseHMS(str) {
+    // Parse "12:30:00" or "12h30m00s" format
+    const parts = str.replace(/[hms°′″:]/g, ' ').trim().split(/\s+/);
+    const h = parseFloat(parts[0]) || 0;
+    const m = parseFloat(parts[1]) || 0;
+    const s = parseFloat(parts[2]) || 0;
+    return h + m / 60 + s / 3600;
+  }
+
+  function parseDMS(str) {
+    // Parse "+45:00:00" or "45°00′00″" format
+    const sign = str.startsWith('-') ? -1 : 1;
+    const parts = str.replace(/[+\-°′″:]/g, ' ').trim().split(/\s+/);
+    const d = parseFloat(parts[0]) || 0;
+    const m = parseFloat(parts[1]) || 0;
+    const s = parseFloat(parts[2]) || 0;
+    return sign * (d + m / 60 + s / 3600);
+  }
+
+  function formatHMS(hours) {
+    const h = Math.floor(hours);
+    const mFloat = (hours - h) * 60;
+    const m = Math.floor(mFloat);
+    const s = (mFloat - m) * 60;
+    return `${h}h ${m}m ${s.toFixed(2)}s`;
+  }
+
+  function formatDMS(degrees) {
+    const sign = degrees < 0 ? '-' : '+';
+    const abs = Math.abs(degrees);
+    const d = Math.floor(abs);
+    const mFloat = (abs - d) * 60;
+    const m = Math.floor(mFloat);
+    const s = (mFloat - m) * 60;
+    return `${sign}${d}° ${m}′ ${s.toFixed(2)}″`;
+  }
+
+  function equatorialToEcliptic(ra, dec) {
+    // RA in degrees, Dec in degrees
+    const raRad = ra * DEG_TO_RAD;
+    const decRad = dec * DEG_TO_RAD;
+    const oblRad = OBLIQUITY_J2000 * DEG_TO_RAD;
+    
+    const sinLambda = Math.sin(raRad) * Math.cos(oblRad) + Math.tan(decRad) * Math.sin(oblRad);
+    const cosLambda = Math.cos(raRad);
+    const lambda = Math.atan2(sinLambda, cosLambda) * RAD_TO_DEG;
+    
+    const sinBeta = Math.sin(decRad) * Math.cos(oblRad) - Math.cos(decRad) * Math.sin(oblRad) * Math.sin(raRad);
+    const beta = Math.asin(sinBeta) * RAD_TO_DEG;
+    
+    return { lambda: (lambda + 360) % 360, beta };
+  }
+
+  function eclipticToEquatorial(lambda, beta) {
+    const lambdaRad = lambda * DEG_TO_RAD;
+    const betaRad = beta * DEG_TO_RAD;
+    const oblRad = OBLIQUITY_J2000 * DEG_TO_RAD;
+    
+    const sinRA = Math.sin(lambdaRad) * Math.cos(oblRad) - Math.tan(betaRad) * Math.sin(oblRad);
+    const cosRA = Math.cos(lambdaRad);
+    const ra = Math.atan2(sinRA, cosRA) * RAD_TO_DEG;
+    
+    const sinDec = Math.sin(betaRad) * Math.cos(oblRad) + Math.cos(betaRad) * Math.sin(oblRad) * Math.sin(lambdaRad);
+    const dec = Math.asin(sinDec) * RAD_TO_DEG;
+    
+    return { ra: (ra + 360) % 360, dec };
+  }
+
+  function equatorialToGalactic(ra, dec) {
+    // Using IAU 1958 galactic coordinate system
+    const ra_ngp = 192.85948 * DEG_TO_RAD; // RA of North Galactic Pole
+    const dec_ngp = 27.12825 * DEG_TO_RAD; // Dec of North Galactic Pole
+    const l_ncp = 122.93192 * DEG_TO_RAD;  // Galactic longitude of North Celestial Pole
+    
+    const raRad = ra * DEG_TO_RAD;
+    const decRad = dec * DEG_TO_RAD;
+    
+    const sinB = Math.sin(dec_ngp) * Math.sin(decRad) + Math.cos(dec_ngp) * Math.cos(decRad) * Math.cos(raRad - ra_ngp);
+    const b = Math.asin(sinB);
+    
+    const sinL = Math.cos(decRad) * Math.sin(raRad - ra_ngp);
+    const cosL = Math.cos(dec_ngp) * Math.sin(decRad) - Math.sin(dec_ngp) * Math.cos(decRad) * Math.cos(raRad - ra_ngp);
+    let l = l_ncp - Math.atan2(sinL, cosL);
+    
+    l = ((l * RAD_TO_DEG) + 360) % 360;
+    
+    return { l, b: b * RAD_TO_DEG };
+  }
+
+  // =============================================================================
+  // PLANETARY POSITION FUNCTIONS (Simplified Kepler)
+  // =============================================================================
+
+  function planetPosition(planet, jd) {
+    // Simplified planetary position using mean orbital elements
+    // This is a basic approximation; Siderust uses much more precise algorithms
+    
+    const T = (jd - J2000) / 36525; // Julian centuries since J2000
+    const n = 360 / planet.period; // Mean motion (deg/day)
+    const M = (n * (jd - J2000)) % 360; // Mean anomaly
+    
+    // Solve Kepler's equation (simplified, few iterations)
+    let E = M * DEG_TO_RAD;
+    for (let i = 0; i < 10; i++) {
+      E = M * DEG_TO_RAD + planet.ecc * Math.sin(E);
+    }
+    
+    // True anomaly
+    const nu = 2 * Math.atan2(
+      Math.sqrt(1 + planet.ecc) * Math.sin(E / 2),
+      Math.sqrt(1 - planet.ecc) * Math.cos(E / 2)
+    );
+    
+    // Distance from Sun
+    const r = planet.sma * (1 - planet.ecc * Math.cos(E));
+    
+    // Heliocentric longitude (simplified, ignoring longitude of perihelion and ascending node)
+    const longitude = (nu * RAD_TO_DEG + 180) % 360;
+    
+    // Heliocentric latitude (simplified)
+    const latitude = planet.inc * Math.sin(nu);
+    
+    // Orbital velocity (vis-viva equation)
+    const mu = 1.327124400189e11; // GM of Sun in km³/s²
+    const a_km = planet.sma * AU_TO_KM;
+    const r_km = r * AU_TO_KM;
+    const velocity = Math.sqrt(mu * (2 / r_km - 1 / a_km));
+    
+    return {
+      distance: r,
+      longitude: (longitude + 360) % 360,
+      latitude,
+      velocity,
+      x: r * Math.cos(longitude * DEG_TO_RAD),
+      y: r * Math.sin(longitude * DEG_TO_RAD)
+    };
+  }
+
+  // =============================================================================
+  // UI FUNCTIONS
+  // =============================================================================
+
+  function initDemo() {
+    // Tab switching
+    document.querySelectorAll('.demo-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetId = tab.dataset.tab;
+        
+        // Update tab styles
+        document.querySelectorAll('.demo-tab').forEach(t => {
+          t.classList.remove('bg-brand-100', 'dark:bg-brand-900/30', 'text-brand-700', 'dark:text-brand-400');
+          t.classList.add('text-gray-600', 'dark:text-gray-400', 'hover:bg-gray-100', 'dark:hover:bg-gray-800');
+        });
+        tab.classList.add('bg-brand-100', 'dark:bg-brand-900/30', 'text-brand-700', 'dark:text-brand-400');
+        tab.classList.remove('text-gray-600', 'dark:text-gray-400', 'hover:bg-gray-100', 'dark:hover:bg-gray-800');
+        
+        // Show/hide sections
+        document.querySelectorAll('.demo-section').forEach(section => {
+          section.classList.add('hidden');
+        });
+        document.getElementById(`${targetId}-section`)?.classList.remove('hidden');
+      });
+    });
+
+    // Cartesian <-> Spherical conversion
+    document.getElementById('cart-to-sph')?.addEventListener('click', () => {
+      const x = parseFloat(document.getElementById('cart-x').value) || 0;
+      const y = parseFloat(document.getElementById('cart-y').value) || 0;
+      const z = parseFloat(document.getElementById('cart-z').value) || 0;
+      
+      const { r, theta, phi } = cartesianToSpherical(x, y, z);
+      
+      document.getElementById('sph-r').value = r.toFixed(6);
+      document.getElementById('sph-theta').value = theta.toFixed(6);
+      document.getElementById('sph-phi').value = phi.toFixed(6);
+    });
+
+    document.getElementById('sph-to-cart')?.addEventListener('click', () => {
+      const r = parseFloat(document.getElementById('sph-r').value) || 0;
+      const theta = parseFloat(document.getElementById('sph-theta').value) || 0;
+      const phi = parseFloat(document.getElementById('sph-phi').value) || 0;
+      
+      const { x, y, z } = sphericalToCartesian(r, theta, phi);
+      
+      document.getElementById('cart-x').value = x.toFixed(6);
+      document.getElementById('cart-y').value = y.toFixed(6);
+      document.getElementById('cart-z').value = z.toFixed(6);
+    });
+
+    // Coordinate system selector
+    const coordSystem = document.getElementById('coord-system');
+    const targetSystem = document.getElementById('target-system');
+    const observerLocation = document.getElementById('observer-location');
+    
+    function updateCoordLabels() {
+      const system = coordSystem?.value;
+      const lonLabel = document.getElementById('coord-lon-label');
+      const latLabel = document.getElementById('coord-lat-label');
+      
+      if (system === 'equatorial') {
+        lonLabel.textContent = 'RA (h:m:s)';
+        latLabel.textContent = 'Dec (°:′:″)';
+      } else if (system === 'ecliptic') {
+        lonLabel.textContent = 'λ (°)';
+        latLabel.textContent = 'β (°)';
+      } else if (system === 'galactic') {
+        lonLabel.textContent = 'l (°)';
+        latLabel.textContent = 'b (°)';
+      } else if (system === 'horizontal') {
+        lonLabel.textContent = 'Azimuth (°)';
+        latLabel.textContent = 'Altitude (°)';
+      }
+      
+      // Show observer location if horizontal is selected
+      const showObs = system === 'horizontal' || targetSystem?.value === 'horizontal';
+      observerLocation?.classList.toggle('hidden', !showObs);
+    }
+    
+    coordSystem?.addEventListener('change', updateCoordLabels);
+    targetSystem?.addEventListener('change', updateCoordLabels);
+
+    // Coordinate conversion
+    document.getElementById('convert-coords')?.addEventListener('click', () => {
+      const fromSystem = coordSystem?.value || 'equatorial';
+      const toSystem = targetSystem?.value || 'ecliptic';
+      const lonInput = document.getElementById('coord-lon').value;
+      const latInput = document.getElementById('coord-lat').value;
+      
+      let ra, dec, result;
+      
+      // Parse input based on source system
+      if (fromSystem === 'equatorial') {
+        ra = parseHMS(lonInput) * 15; // Convert hours to degrees
+        dec = parseDMS(latInput);
+      } else if (fromSystem === 'ecliptic') {
+        const lambda = parseFloat(lonInput);
+        const beta = parseFloat(latInput);
+        const eq = eclipticToEquatorial(lambda, beta);
+        ra = eq.ra;
+        dec = eq.dec;
+      } else {
+        ra = parseFloat(lonInput);
+        dec = parseFloat(latInput);
+      }
+      
+      // Convert to target system
+      if (toSystem === 'ecliptic') {
+        const ecl = equatorialToEcliptic(ra, dec);
+        result = `λ = ${ecl.lambda.toFixed(4)}°, β = ${ecl.beta.toFixed(4)}°`;
+      } else if (toSystem === 'equatorial') {
+        result = `RA = ${formatHMS(ra / 15)}, Dec = ${formatDMS(dec)}`;
+      } else if (toSystem === 'galactic') {
+        const gal = equatorialToGalactic(ra, dec);
+        result = `l = ${gal.l.toFixed(4)}°, b = ${gal.b.toFixed(4)}°`;
+      } else {
+        result = 'Horizontal conversion requires additional time data';
+      }
+      
+      const resultDiv = document.getElementById('coord-result');
+      const resultText = document.getElementById('coord-result-text');
+      resultDiv?.classList.remove('hidden');
+      if (resultText) resultText.textContent = result;
+    });
+
+    // Time conversion
+    function convertTime() {
+      const year = parseInt(document.getElementById('utc-year').value) || 2024;
+      const month = parseInt(document.getElementById('utc-month').value) || 1;
+      const day = parseInt(document.getElementById('utc-day').value) || 1;
+      const hour = parseInt(document.getElementById('utc-hour').value) || 0;
+      const min = parseInt(document.getElementById('utc-min').value) || 0;
+      const sec = parseFloat(document.getElementById('utc-sec').value) || 0;
+      
+      const jd = utcToJD(year, month, day, hour, min, sec);
+      const mjd = jdToMJD(jd);
+      const unix = jdToUnix(jd);
+      const doy = getDayOfYear(year, month, day);
+      
+      document.getElementById('result-jd').value = jd.toFixed(8);
+      document.getElementById('result-mjd').value = mjd.toFixed(8);
+      document.getElementById('result-unix').value = Math.floor(unix).toString();
+      document.getElementById('result-doy').value = doy.toString();
+      
+      const isoDate = new Date(year, month - 1, day, hour, min, Math.floor(sec));
+      document.getElementById('result-iso').value = isoDate.toISOString();
+    }
+    
+    document.getElementById('convert-time')?.addEventListener('click', convertTime);
+    
+    document.getElementById('use-now')?.addEventListener('click', () => {
+      const now = new Date();
+      document.getElementById('utc-year').value = now.getUTCFullYear();
+      document.getElementById('utc-month').value = now.getUTCMonth() + 1;
+      document.getElementById('utc-day').value = now.getUTCDate();
+      document.getElementById('utc-hour').value = now.getUTCHours();
+      document.getElementById('utc-min').value = now.getUTCMinutes();
+      document.getElementById('utc-sec').value = now.getUTCSeconds();
+      convertTime();
+    });
+
+    // Copy buttons for time values
+    document.querySelectorAll('.copy-time-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const targetId = btn.dataset.target;
+        const value = document.getElementById(targetId)?.value;
+        if (value) {
+          await navigator.clipboard.writeText(value);
+          btn.innerHTML = '<svg class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>';
+          setTimeout(() => {
+            btn.innerHTML = '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>';
+          }, 2000);
+        }
+      });
+    });
+
+    // Initial time conversion
+    convertTime();
+
+    // Solar System Explorer
+    initSolarSystem();
+  }
+
+  function initSolarSystem() {
+    const planetGrid = document.getElementById('planet-grid');
+    const svg = document.getElementById('orbit-diagram');
+    
+    if (!planetGrid || !svg) return;
+    
+    // Get current JD
+    const now = new Date();
+    const jd = utcToJD(
+      now.getUTCFullYear(),
+      now.getUTCMonth() + 1,
+      now.getUTCDate(),
+      now.getUTCHours(),
+      now.getUTCMinutes(),
+      now.getUTCSeconds()
+    );
+    
+    // Update time display
+    document.getElementById('current-jd').textContent = jd.toFixed(6);
+    document.getElementById('current-utc').textContent = now.toISOString().replace('T', ' ').split('.')[0];
+    
+    // Create planet cards
+    planetGrid.innerHTML = PLANETS.slice(0, 8).map(planet => {
+      const pos = planetPosition(planet, jd);
+      return `
+        <div class="planet-card card p-4 cursor-pointer hover:border-brand-500/50 transition-colors" data-planet="${planet.name}">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-2xl" style="background-color: ${planet.color}20">
+              ${planet.symbol}
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-900 dark:text-white">${planet.name}</h4>
+              <p class="text-xs text-gray-500 dark:text-gray-400">${pos.distance.toFixed(3)} AU</p>
+            </div>
+          </div>
+          <div class="text-sm space-y-1">
+            <div class="flex justify-between">
+              <span class="text-gray-500 dark:text-gray-400">Longitude</span>
+              <span class="font-mono text-gray-900 dark:text-white">${pos.longitude.toFixed(2)}°</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500 dark:text-gray-400">Velocity</span>
+              <span class="font-mono text-gray-900 dark:text-white">${pos.velocity.toFixed(1)} km/s</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    // Add click handlers for planet details
+    document.querySelectorAll('.planet-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const planetName = card.dataset.planet;
+        const planet = PLANETS.find(p => p.name === planetName);
+        if (planet) showPlanetDetails(planet, jd);
+      });
+    });
+    
+    // Draw orbit diagram (inner planets only)
+    drawOrbits(jd);
+    
+    // Refresh button
+    document.getElementById('refresh-positions')?.addEventListener('click', () => {
+      initSolarSystem();
+    });
+  }
+
+  function showPlanetDetails(planet, jd) {
+    const details = document.getElementById('planet-details');
+    if (!details) return;
+    
+    const pos = planetPosition(planet, jd);
+    
+    document.getElementById('detail-name').textContent = planet.name;
+    document.getElementById('detail-mass').textContent = planet.mass;
+    document.getElementById('detail-radius').textContent = planet.radius;
+    document.getElementById('detail-gravity').textContent = planet.gravity;
+    document.getElementById('detail-day').textContent = planet.dayLength;
+    document.getElementById('detail-sma').textContent = planet.sma.toFixed(4) + ' AU';
+    document.getElementById('detail-ecc').textContent = planet.ecc.toFixed(5);
+    document.getElementById('detail-inc').textContent = planet.inc.toFixed(3) + '°';
+    document.getElementById('detail-period').textContent = planet.period.toFixed(1) + ' days';
+    document.getElementById('detail-distance').textContent = pos.distance.toFixed(4) + ' AU';
+    document.getElementById('detail-hlon').textContent = pos.longitude.toFixed(2) + '°';
+    document.getElementById('detail-hlat').textContent = pos.latitude.toFixed(2) + '°';
+    document.getElementById('detail-velocity').textContent = pos.velocity.toFixed(2) + ' km/s';
+    
+    details.classList.remove('hidden');
+    details.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function drawOrbits(jd) {
+    const svg = document.getElementById('orbit-diagram');
+    if (!svg) return;
+    
+    // Clear existing paths (keep the sun)
+    svg.querySelectorAll('ellipse, circle:not(:first-child)').forEach(el => el.remove());
+    
+    const scale = 140; // pixels per AU for inner planets
+    const innerPlanets = PLANETS.slice(0, 4); // Mercury to Mars
+    
+    innerPlanets.forEach(planet => {
+      const a = planet.sma * scale;
+      const b = a * Math.sqrt(1 - planet.ecc * planet.ecc);
+      const c = a * planet.ecc;
+      
+      // Draw orbit ellipse
+      const orbit = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+      orbit.setAttribute('cx', -c);
+      orbit.setAttribute('cy', '0');
+      orbit.setAttribute('rx', a);
+      orbit.setAttribute('ry', b);
+      orbit.setAttribute('fill', 'none');
+      orbit.setAttribute('stroke', planet.orbitColor);
+      orbit.setAttribute('stroke-width', '1');
+      orbit.setAttribute('stroke-opacity', '0.5');
+      svg.appendChild(orbit);
+      
+      // Draw planet position
+      const pos = planetPosition(planet, jd);
+      const x = pos.x * scale;
+      const y = -pos.y * scale; // Flip Y for SVG
+      
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('cx', x);
+      dot.setAttribute('cy', y);
+      dot.setAttribute('r', planet.name === 'Earth' || planet.name === 'Venus' ? 6 : 5);
+      dot.setAttribute('fill', planet.color);
+      
+      // Add planet label
+      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      label.setAttribute('x', x);
+      label.setAttribute('y', y - 10);
+      label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('fill', 'currentColor');
+      label.setAttribute('font-size', '10');
+      label.setAttribute('class', 'fill-gray-600 dark:fill-gray-400');
+      label.textContent = planet.symbol;
+      
+      svg.appendChild(dot);
+      svg.appendChild(label);
+    });
+  }
+
+  // Initialize on page load
+  initDemo();
+  document.addEventListener('astro:after-swap', initDemo);
+</script>

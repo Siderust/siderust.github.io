@@ -94,6 +94,7 @@ export interface RepoMetadata {
   // External links
   docsUrl: string | null;
   crateUrl: string | null;
+  demoUrl: string | null;
   
   // Status (from config or heuristic)
   status: 'active' | 'experimental' | 'stable' | 'maintenance' | 'deprecated';
@@ -341,6 +342,7 @@ export async function getRepoMetadata(
     // External links (only for Rust projects)
     docsUrl: isRustProject ? getDocsRsUrl(repo, projectConfig?.docsUrl) : projectConfig?.docsUrl || null,
     crateUrl: isRustProject ? getCratesIoUrl(repo, projectConfig?.crateUrl) : projectConfig?.crateUrl || null,
+    demoUrl: projectConfig?.demoUrl || null,
 
     // Status
     status,

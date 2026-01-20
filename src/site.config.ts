@@ -22,6 +22,8 @@ export interface ProjectConfig {
   docsUrl?: string;
   /** Custom crates.io URL (if different from standard) */
   crateUrl?: string;
+  /** Interactive demo URL */
+  demoUrl?: string;
   /** Short "why it exists" explanation */
   purpose?: string;
   /** Getting started code snippet or instructions */
@@ -84,23 +86,28 @@ const siteConfig: SiteConfig = {
     {
       repo: 'siderust',
       name: 'Siderust',
-      description: 'The core Siderust library providing foundational utilities and patterns for Rust development.',
+      description: 'Reference ephemeris and orbit-analysis library for embedded flight-software and research-grade pipelines.',
       status: 'active',
       featured: true,
-      purpose: 'Siderust serves as the foundation for our ecosystem, providing common utilities, patterns, and abstractions that other crates in the organization build upon.',
+      purpose: 'Siderust aims to be the reference ephemeris and orbit-analysis library for embedded flight-software as well as research-grade pipelines. Every algorithm ships with validation tests against authoritative data (JPL Horizons, IMCCE, SOFA). No unsafe blocks, no hidden allocations.',
       features: [
-        'Zero-cost abstractions',
-        'Comprehensive documentation',
-        'Extensive test coverage',
-        'No unsafe code by default',
+        'Validated against JPL Horizons, IMCCE, and SOFA standards',
+        'Flight-software ready with no unsafe blocks',
+        'Zero hidden allocations for embedded use',
+        'Research-grade precision for scientific applications',
       ],
+      demoUrl: '/demo',
       gettingStarted: `# Add to your Cargo.toml
 [dependencies]
 siderust = "0.1"
 
 # In your code
-use siderust::prelude::*;`,
-      tags: ['core', 'utilities', 'rust'],
+use siderust::prelude::*;
+
+// Compute planetary positions
+let jd = JulianDate::from_utc(2024, 6, 15, 12, 0, 0.0);
+let mars = planets::mars_position(jd);`,
+      tags: ['ephemeris', 'orbit', 'astrodynamics', 'rust'],
     },
     {
       repo: 'qtty',
