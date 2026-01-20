@@ -1,0 +1,9 @@
+[submodule "siderust"]
+	path = siderust
+	url = git@github.com:Siderust/siderust.git
+[submodule "qtty"]
+	path = qtty
+	url = git@github.com:Siderust/qtty.git
+[submodule "affn"]
+	path = affn
+	url = git@github.com:Siderust/affn.git
