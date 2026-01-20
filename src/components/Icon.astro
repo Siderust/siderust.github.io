@@ -9,7 +9,14 @@ if (!name) {
   throw new Error('Icon component requires a name prop.');
 }
 
-const rawIcon = icons[name];
+const normalizeName = (value) =>
+  value
+    .split('-')
+    .map((part) => (part ? `${part[0].toUpperCase()}${part.slice(1)}` : ''))
+    .join('');
+
+const normalizedName = normalizeName(name);
+const rawIcon = icons[normalizedName] ?? icons[name];
 if (!rawIcon) {
   throw new Error(`Unknown icon: ${name}`);
 }
