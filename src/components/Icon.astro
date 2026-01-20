@@ -1,7 +1,7 @@
 ---
 import lucide from 'lucide-static';
 
-const { icons } = lucide;
+const icons = 'icons' in lucide ? lucide.icons : lucide;
 
 const { name, class: className = 'h-5 w-5', title } = Astro.props;
 
