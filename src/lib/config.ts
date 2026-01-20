@@ -1,4 +1,5 @@
-import siteConfig, { ProjectOverride, ProjectStatus } from '../../site.config';
+import siteConfig from '../../site.config';
+import type { ProjectOverride, ProjectStatus } from '../../site.config';
 
 export type { ProjectOverride, ProjectStatus };
 
