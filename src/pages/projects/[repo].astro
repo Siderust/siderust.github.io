@@ -1,0 +1,170 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { fetchAllProjects, type ProjectData } from '../../utils/github';
+import { Star, GitFork, Calendar, ExternalLink, Github, Book, Terminal } from 'lucide-react';
+import { siteConfig } from '../../../site.config';
+
+export async function getStaticPaths() {
+  const projects = await fetchAllProjects();
+  return projects.map((project) => ({
+    params: { repo: project.name },
+    props: { project },
+  }));
+}
+
+interface Props {
+  project: ProjectData;
+}
+
+const { project } = Astro.props;
+
+// Helper to determine status
+const getStatus = (project: ProjectData) => {
+    // This is a heuristic.
+    // If last update < 3 months, Active.
+    // If version starts with 0.x, Experimental/Beta.
+    // If version >= 1.0, Stable.
+    // Since we don't have version easily, we use updated_at.
+    const lastUpdate = new Date(project.updated_at);
+    const now = new Date();
+    const monthsSinceUpdate = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24 * 30);
+    
+    if (monthsSinceUpdate > 12) return { label: 'Archived', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' };
+    if (monthsSinceUpdate > 3) return { label: 'Maintenance', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' };
+    return { label: 'Active', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
+};
+
+const status = getStatus(project);
+---
+
+<Layout title={project.name} description={project.description || `Details for ${project.name}`}>
+  <div class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
+    <div class="container mx-auto px-4 py-12 md:py-20">
+      <div class="max-w-4xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
+          <div>
+            <div class="flex items-center gap-4 mb-4">
+              <h1 class="text-4xl font-bold text-slate-900 dark:text-slate-100">{project.name}</h1>
+              <span class={`px-3 py-1 rounded-full text-sm font-medium ${status.color}`}>
+                {status.label}
+              </span>
+            </div>
+            <p class="text-xl text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
+              {project.description}
+            </p>
+          </div>
+          
+          <div class="flex flex-col gap-3 min-w-[200px]">
+            <a
+              href={project.html_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-medium hover:opacity-90 transition-opacity"
+            >
+              <Github className="w-4 h-4" />
+              View Repository
+            </a>
+            {project.homepage && (
+              <a
+                href={project.homepage}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                <Book className="w-4 h-4" />
+                Documentation
+              </a>
+            )}
+            {/* Crate.io link placeholder - would need logic to detect if it's a crate */}
+            <a
+                href={`https://crates.io/crates/${project.name}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            >
+                <div class="w-4 h-4 bg-orange-500 rounded-sm" /> {/* Simple crate icon placeholder */}
+                View on Crates.io
+            </a>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-6 text-sm text-slate-500 dark:text-slate-400">
+          <div class="flex items-center gap-2">
+            <Star className="w-4 h-4" />
+            <span>{project.stargazers_count} Stars</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <GitFork className="w-4 h-4" />
+            <span>{project.forks_count} Forks</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            <span>Last updated {new Date(project.updated_at).toLocaleDateString()}</span>
+          </div>
+          {project.license && (
+             <div class="flex items-center gap-2">
+                <span class="font-medium">License:</span>
+                <span>{project.license.name}</span>
+             </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mx-auto px-4 py-12">
+    <div class="max-w-4xl mx-auto grid md:grid-cols-[1fr_250px] gap-12">
+        <div class="prose prose-slate dark:prose-invert max-w-none">
+            {/* We could render the readme here, but simpler is to show specific sections */}
+            <h2>Getting Started</h2>
+            <div class="not-prose bg-slate-100 dark:bg-slate-800 p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                <p># Cargo.toml</p>
+                <p>[dependencies]</p>
+                <p>{project.name} = "{project.latestRelease?.tag_name.replace('v', '') || '0.1.0'}"</p>
+            </div>
+             
+            <div class="mt-8">
+                <h3>About this project</h3>
+                <p>{project.description}</p>
+                {project.readme && (
+                    <div class="mt-4 p-4 border border-slate-200 dark:border-slate-800 rounded-lg">
+                        <p class="text-sm text-slate-500 italic mb-2">From README.md:</p>
+                        <pre class="whitespace-pre-wrap font-sans text-sm text-slate-700 dark:text-slate-300 overflow-x-auto">
+                            {project.readme.split('\n').slice(0, 10).join('\n')}
+                            {project.readme.split('\n').length > 10 && '\n...'}
+                        </pre>
+                        <div class="mt-4">
+                            <a href={project.html_url} class="text-blue-600 hover:underline">Read full documentation on GitHub &rarr;</a>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+        </div>
+        
+        <div class="space-y-8">
+            <div>
+                <h3 class="font-bold text-slate-900 dark:text-slate-100 mb-4">Contributors</h3>
+                <p class="text-sm text-slate-600 dark:text-slate-400">
+                    Join us in building {project.name}! Check out the contributing guidelines on GitHub.
+                </p>
+                <a href={`${project.html_url}/blob/main/CONTRIBUTING.md`} class="block mt-2 text-sm text-blue-600 hover:underline">
+                    How to contribute
+                </a>
+            </div>
+            
+            <div>
+                <h3 class="font-bold text-slate-900 dark:text-slate-100 mb-4">Tags</h3>
+                <div class="flex flex-wrap gap-2">
+                    {project.topics.map(topic => (
+                        <span class="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-xs text-slate-600 dark:text-slate-400">
+                            {topic}
+                        </span>
+                    ))}
+                    {project.topics.length === 0 && <span class="text-sm text-slate-500">No tags</span>}
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+</Layout>

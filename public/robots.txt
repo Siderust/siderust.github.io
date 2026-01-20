@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://siderust.github.io/sitemap-index.xml

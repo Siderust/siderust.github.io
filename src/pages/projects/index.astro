@@ -1,0 +1,22 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProjectGrid from '../../components/ProjectGrid';
+import { fetchAllProjects } from '../../utils/github';
+
+const projects = await fetchAllProjects();
+---
+
+<Layout title="Projects" description="Explore our open source projects and libraries.">
+  <section class="py-20">
+    <div class="container mx-auto px-4">
+      <div class="max-w-2xl mb-12">
+        <h1 class="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-4">Our Projects</h1>
+        <p class="text-xl text-slate-600 dark:text-slate-400">
+          Open source tools and libraries built with performance and safety in mind.
+        </p>
+      </div>
+
+      <ProjectGrid client:load projects={projects} />
+    </div>
+  </section>
+</Layout>

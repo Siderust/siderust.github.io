@@ -1,0 +1,44 @@
+---
+import { siteConfig } from '../../site.config';
+import ThemeToggle from './ThemeToggle';
+import { Github } from 'lucide-react';
+
+const links = [
+  { href: '/', label: 'Home' },
+  { href: '/projects', label: 'Projects' },
+  { href: '/about', label: 'About' },
+];
+---
+
+<header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm">
+  <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+    <div class="flex items-center gap-8">
+      <a href="/" class="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+        {siteConfig.org}
+      </a>
+      <nav class="hidden md:flex gap-6">
+        {links.map(link => (
+          <a
+            href={link.href}
+            class="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors"
+          >
+            {link.label}
+          </a>
+        ))}
+      </nav>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <a
+        href={siteConfig.social.github}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="p-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        aria-label="GitHub"
+      >
+        <Github className="w-5 h-5" />
+      </a>
+      <ThemeToggle client:load />
+    </div>
+  </div>
+</header>

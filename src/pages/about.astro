@@ -1,0 +1,68 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { siteConfig } from '../../site.config';
+import { Github, Mail, Globe } from 'lucide-react';
+---
+
+<Layout title="About">
+  <div class="container mx-auto px-4 py-20 max-w-4xl">
+    <h1 class="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-8">About {siteConfig.org}</h1>
+    
+    <div class="prose prose-lg prose-slate dark:prose-invert max-w-none mb-16">
+      <p class="lead">
+        {siteConfig.description}
+      </p>
+      <p>
+        Siderust was founded with a mission to explore and expand the Rust ecosystem. 
+        We believe in the power of memory safety, performance, and developer ergonomics.
+        Our projects range from low-level libraries to developer tools, all open source and community-driven.
+      </p>
+      
+      <h2>Our Values</h2>
+      <ul>
+        <li><strong>Safety First:</strong> Leveraging Rust's guarantees to build robust software.</li>
+        <li><strong>Performance:</strong> Zero-cost abstractions where possible.</li>
+        <li><strong>Community:</strong> Open source, inclusive, and collaborative.</li>
+      </ul>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-12">
+      <div>
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Connect</h2>
+        <ul class="space-y-4">
+          <li>
+            <a href={siteConfig.social.github} class="flex items-center gap-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <Github className="w-5 h-5" />
+              <span>Follow us on GitHub</span>
+            </a>
+          </li>
+          <li>
+             <div class="flex items-center gap-3 text-slate-600 dark:text-slate-400">
+                <Mail className="w-5 h-5" />
+                <span>contact@siderust.org (placeholder)</span>
+             </div>
+          </li>
+           <li>
+             <div class="flex items-center gap-3 text-slate-600 dark:text-slate-400">
+                <Globe className="w-5 h-5" />
+                <span>siderust.github.io</span>
+             </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="bg-slate-50 dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">How to Contribute</h2>
+        <p class="text-slate-600 dark:text-slate-400 mb-6">
+          We welcome contributions of all kinds! Whether it's fixing a bug, improving documentation, or proposing a new feature.
+        </p>
+        <a 
+          href={siteConfig.social.github} 
+          class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+        >
+          Check our Repositories
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>

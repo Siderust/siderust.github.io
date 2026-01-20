@@ -1,0 +1,78 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { siteConfig } from '../../site.config';
+import { fetchAllProjects } from '../utils/github';
+import { ArrowRight, Github } from 'lucide-react';
+
+const projects = await fetchAllProjects();
+const featuredProjects = projects.slice(0, 3);
+---
+
+<Layout title="Home">
+  {/* Hero Section */}
+  <section class="relative py-20 md:py-32 overflow-hidden">
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="max-w-3xl">
+        <h1 class="text-5xl md:text-6xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-6">
+          Building the future of <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">safe systems</span>.
+        </h1>
+        <p class="text-xl text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
+          {siteConfig.description}
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <a
+            href="/projects"
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium"
+          >
+            Explore Projects
+            <ArrowRight className="w-4 h-4" />
+          </a>
+          <a
+            href={siteConfig.social.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium"
+          >
+            <Github className="w-4 h-4" />
+            View on GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    {/* Background decoration */}
+    <div class="absolute top-0 right-0 -translate-y-12 translate-x-12 opacity-10 dark:opacity-5 pointer-events-none">
+       <svg width="400" height="400" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#2563EB" d="M44.7,-76.4C58.9,-69.2,71.8,-59.1,81.6,-46.6C91.4,-34.1,98.1,-19.2,95.8,-4.9C93.5,9.4,82.2,23.1,70.8,34.5C59.4,45.9,47.9,55,35.4,63.4C22.9,71.8,9.4,79.5,-3.1,84.9C-15.6,90.3,-27.1,93.4,-38.3,88.7C-49.5,84,-60.4,71.5,-69.5,58.2C-78.6,44.9,-85.9,30.8,-87.3,16.2C-88.7,1.6,-84.2,-13.5,-75.7,-26.4C-67.2,-39.3,-54.7,-50,-41.8,-57.8C-28.9,-65.6,-15.6,-70.5,-0.9,-68.9C13.8,-67.3,27.6,-59.2,44.7,-76.4Z" transform="translate(100 100)" />
+       </svg>
+    </div>
+  </section>
+
+  {/* Featured Projects */}
+  <section class="py-20 bg-slate-50 dark:bg-slate-900/50">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between mb-12">
+        <h2 class="text-3xl font-bold text-slate-900 dark:text-slate-100">Featured Projects</h2>
+        <a href="/projects" class="text-blue-600 dark:text-blue-400 font-medium hover:underline">View all &rarr;</a>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {featuredProjects.map(project => (
+          <ProjectCard project={project} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* About Section Teaser */}
+  <section class="py-20">
+    <div class="container mx-auto px-4 text-center max-w-2xl">
+      <h2 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-6">What we build</h2>
+      <p class="text-lg text-slate-600 dark:text-slate-400 mb-8">
+        We specialize in creating high-performance, memory-safe tools and libraries. From low-level utilities to high-level applications, our goal is to improve the developer experience and system reliability.
+      </p>
+      <a href="/about" class="text-blue-600 dark:text-blue-400 font-medium hover:underline">Learn more about us &rarr;</a>
+    </div>
+  </section>
+</Layout>
