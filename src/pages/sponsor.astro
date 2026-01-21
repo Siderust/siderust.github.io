@@ -1,0 +1,16 @@
+---
+/**
+ * Sponsor Page
+ *
+ * Dedicated sponsorship page.
+ */
+import Layout from '../layouts/Layout.astro';
+import SponsorSection from '../components/SponsorSection.astro';
+import siteConfig from '../site.config';
+
+const description = `Support ${siteConfig.name} with sponsorships that sustain open-source maintenance and roadmap work.`;
+---
+
+<Layout title={`Sponsor ${siteConfig.name}`} description={description}>
+  <SponsorSection />
+</Layout>
