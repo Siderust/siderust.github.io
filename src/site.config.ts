@@ -61,6 +61,23 @@ export interface SiteConfig {
     github: string;
     role?: string;
   }>;
+  /** Sponsorship configuration */
+  sponsorship?: SponsorshipConfig;
+}
+
+export interface SponsorshipTier {
+  name: string;
+  priceLabel: string;
+  bulletPoints: string[];
+  recommended?: boolean;
+}
+
+export interface SponsorshipConfig {
+  enabled: boolean;
+  githubSponsorsUrl?: string;
+  contactEmail?: string;
+  tiers?: SponsorshipTier[];
+  licensingNote?: string;
 }
 
 const siteConfig: SiteConfig = {
@@ -166,6 +183,54 @@ let transformed = transform.apply(point);`,
       tags: ['math', 'graphics', 'geometry', 'rust'],
     },
   ],
+
+  sponsorship: {
+    enabled: true,
+    githubSponsorsUrl: 'https://github.com/sponsors/Siderust',
+    contactEmail: 'sponsors@siderust.org',
+    tiers: [
+      {
+        name: 'Individual',
+        priceLabel: '$5+ / month',
+        bulletPoints: [
+          'Support ongoing open-source maintenance',
+          'Early visibility into roadmap topics',
+          'Community acknowledgement (optional)',
+        ],
+      },
+      {
+        name: 'Supporter',
+        priceLabel: '$50+ / month',
+        bulletPoints: [
+          'Best-effort priority issue triage',
+          'Input on roadmap focus areas',
+          'Name or logo listed on the site (optional)',
+        ],
+        recommended: true,
+      },
+      {
+        name: 'Company',
+        priceLabel: '$500+ / month',
+        bulletPoints: [
+          'Best-effort response for critical issues',
+          'Maintenance and security focus alignment',
+          'Quarterly sponsor updates',
+        ],
+      },
+      {
+        name: 'Strategic / Custom',
+        priceLabel: 'Let’s talk',
+        bulletPoints: [
+          'Custom work discussions (if appropriate)',
+          'Joint roadmap planning on a best-effort basis',
+          'Commercial licensing conversations',
+        ],
+      },
+    ],
+    licensingNote: `Our open-source code is released under the **GNU AGPL** by default.
+For sponsors, we can discuss an alternative, less restrictive license for specific deliverables or usage.
+This is handled **case-by-case** and subject to a separate written agreement.`,
+  },
 };
 
 export default siteConfig;
