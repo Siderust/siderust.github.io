@@ -22,3 +22,30 @@
 [submodule "products/rust/tempoch"]
 	path = products/rust/tempoch
 	url = git@github.com:Siderust/tempoch.git
+[submodule "products/cpp/tempoch-cpp"]
+	path = products/cpp/tempoch-cpp
+	url = git@github.com:Siderust/tempoch-cpp.git
+[submodule "products/cpp/qtty-cpp"]
+	path = products/cpp/qtty-cpp
+	url = git@github.com:Siderust/qtty-cpp.git
+[submodule "products/cpp/siderust-cpp"]
+	path = products/cpp/siderust-cpp
+	url = git@github.com:Siderust/siderust-cpp.git
+[submodule "products/py/qtty-py"]
+	path = products/py/qtty-py
+	url = git@github.com:Siderust/qtty-py.git
+[submodule "products/py/tempoch-py"]
+	path = products/py/tempoch-py
+	url = git@github.com:Siderust/tempoch-py.git
+[submodule "products/py/siderust-py"]
+	path = products/py/siderust-py
+	url = git@github.com:Siderust/siderust-py.git
+[submodule "products/js/tempoch-js"]
+	path = products/js/tempoch-js
+	url = git@github.com:Siderust/tempoch-js.git
+[submodule "products/js/qtty-js"]
+	path = products/js/qtty-js
+	url = git@github.com:Siderust/qtty-js.git
+[submodule "products/js/siderust-js"]
+	path = products/js/siderust-js
+	url = git@github.com:Siderust/siderust-js.git
