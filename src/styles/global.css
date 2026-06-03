@@ -1,0 +1,178 @@
+/* Import fonts - must come first */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Base body styles */
+  body {
+    @apply bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+    @apply antialiased;
+    @apply transition-colors duration-200;
+  }
+
+  /* Focus styles for accessibility */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-950;
+  }
+
+  /* Selection styles */
+  ::selection {
+    @apply bg-brand-500/20 text-brand-900 dark:text-brand-100;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-900;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-600;
+  }
+}
+
+@layer components {
+  /* Container utility */
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Card styles */
+  .card {
+    @apply bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800;
+    @apply shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+
+  /* Button base */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply px-4 py-2 rounded-lg font-medium;
+    @apply transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply btn;
+    @apply bg-brand-600 text-white;
+    @apply hover:bg-brand-700;
+    @apply focus:ring-brand-500 focus:ring-offset-white dark:focus:ring-offset-gray-950;
+  }
+
+  .btn-secondary {
+    @apply btn;
+    @apply bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100;
+    @apply hover:bg-gray-200 dark:hover:bg-gray-700;
+    @apply focus:ring-gray-500 focus:ring-offset-white dark:focus:ring-offset-gray-950;
+  }
+
+  .btn-ghost {
+    @apply btn;
+    @apply text-gray-700 dark:text-gray-300;
+    @apply hover:bg-gray-100 dark:hover:bg-gray-800;
+    @apply focus:ring-gray-500 focus:ring-offset-white dark:focus:ring-offset-gray-950;
+  }
+
+  /* Link styles */
+  .link {
+    @apply text-brand-600 dark:text-brand-400;
+    @apply underline underline-offset-2 decoration-brand-600/30 dark:decoration-brand-400/30;
+    @apply hover:decoration-brand-600 dark:hover:decoration-brand-400;
+    @apply transition-colors duration-200;
+  }
+
+  /* Badge styles */
+  .badge {
+    @apply inline-flex items-center gap-1;
+    @apply px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  /* Code block styling */
+  .code-block {
+    @apply bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto;
+    @apply font-mono text-sm;
+  }
+
+  pre {
+    @apply code-block;
+  }
+
+  code:not(pre code) {
+    @apply bg-gray-100 dark:bg-gray-800 text-brand-600 dark:text-brand-400;
+    @apply px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+
+  /* Section heading */
+  .section-heading {
+    @apply text-3xl sm:text-4xl font-bold tracking-tight;
+  }
+
+  .section-subheading {
+    @apply text-lg text-gray-600 dark:text-gray-400 mt-4 max-w-2xl;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-600 to-rust-600 dark:from-brand-400 dark:to-rust-400;
+    @apply bg-clip-text text-transparent;
+  }
+
+  /* Hero gradient background */
+  .hero-gradient {
+    @apply bg-gradient-to-br from-brand-50 via-white to-rust-50;
+    @apply dark:from-gray-900 dark:via-gray-950 dark:to-gray-900;
+  }
+
+  /* Subtle grid pattern */
+  .grid-pattern {
+    background-image: 
+      linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .dark .grid-pattern {
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  }
+}
+
+@layer utilities {
+  /* Animation delay utilities */
+  .animation-delay-100 {
+    animation-delay: 100ms;
+  }
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  /* Hide scrollbar */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

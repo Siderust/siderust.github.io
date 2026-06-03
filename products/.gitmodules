@@ -1,0 +1,2 @@
+[submodule "products/siderust-cpp"]
+	path = products/cpp/siderust-cpp

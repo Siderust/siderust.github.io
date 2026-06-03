@@ -1,0 +1,2044 @@
+---
+/**
+ * Interactive Demo Lab (localized)
+ *
+ * Three coordinated tools powered by Siderust's WebAssembly engine:
+ *   • Sky Plot, altitude / azimuth vs time
+ *   • Coordinate Playground, frame & center transforms
+ *   • Time Lab, UTC / JD / MJD conversion and observation periods
+ *
+ * Plotly.js loaded from CDN (same pattern as the benchmarks page).
+ * WASM packages vendored into public/vendor/ via the build:wasm-demo script.
+ */
+import Layout from '../../layouts/Layout.astro';
+import { getLocaleStaticPaths, t, type Locale } from '../../i18n/index';
+
+export function getStaticPaths() {
+  return getLocaleStaticPaths();
+}
+
+const locale = Astro.params.locale as Locale;
+const demoClientI18n = JSON.stringify({
+  altitudeChart: t(locale, 'demo.altitudeChart'),
+  azimuthChart: t(locale, 'demo.azimuthChart'),
+  events: t(locale, 'demo.events'),
+  eventType: t(locale, 'demo.eventType'),
+  timeUtc: t(locale, 'demo.timeUtc'),
+  altitude: t(locale, 'demo.altitude'),
+  azimuth: t(locale, 'demo.azimuth'),
+  rise: t(locale, 'demo.rise'),
+  set: t(locale, 'demo.set'),
+  riseAtThreshold: t(locale, 'demo.riseAtThreshold'),
+  setAtThreshold: t(locale, 'demo.setAtThreshold'),
+  upperCulmination: t(locale, 'demo.upperCulmination'),
+  lowerCulmination: t(locale, 'demo.lowerCulmination'),
+  circumpolar: t(locale, 'demo.circumpolar'),
+  neverRises: t(locale, 'demo.neverRises'),
+  moonPhaseLabel: t(locale, 'demo.moonPhaseLabel'),
+  illumination: t(locale, 'demo.illumination'),
+  noEvents: t(locale, 'demo.noEvents'),
+  azimuthCompass: t(locale, 'demo.azimuthCompass'),
+  hoursFromStart: t(locale, 'demo.hoursFromStart'),
+  timeOfDay: t(locale, 'demo.timeOfDay'),
+  skySphere: t(locale, 'demo.skySphere'),
+  skySphereHint: t(locale, 'demo.skySphereHint'),
+  skyLayers: t(locale, 'demo.skyLayers'),
+  skyToggleHorizon: t(locale, 'demo.skyToggleHorizon'),
+  skyToggleThreshold: t(locale, 'demo.skyToggleThreshold'),
+  skyToggleStars: t(locale, 'demo.skyToggleStars'),
+  skyToggleGrid: t(locale, 'demo.skyToggleGrid'),
+  skyToggleLabels: t(locale, 'demo.skyToggleLabels'),
+});
+---
+
+<Layout
+  locale={locale}
+  title={t(locale, 'demo.title')}
+  description={t(locale, 'demo.seoDescription')}
+>
+
+  <!-- ───────────── Hero ───────────── -->
+  <section class="relative overflow-hidden py-16 md:py-20">
+    <!-- Starfield / gradient background -->
+    <div class="absolute inset-0 bg-gradient-to-b from-gray-950 via-indigo-950/80 to-gray-950 dark:from-gray-950 dark:via-indigo-950/60 dark:to-gray-950" aria-hidden="true"></div>
+    <div class="absolute inset-0 opacity-30 dark:opacity-50" aria-hidden="true"
+      style="background-image: radial-gradient(1px 1px at 10% 20%, white 1px, transparent 0), radial-gradient(1px 1px at 30% 60%, white 1px, transparent 0), radial-gradient(1.5px 1.5px at 50% 15%, white 1px, transparent 0), radial-gradient(1px 1px at 70% 45%, white 1px, transparent 0), radial-gradient(1.5px 1.5px at 85% 70%, white 1px, transparent 0), radial-gradient(1px 1px at 20% 80%, white 1px, transparent 0), radial-gradient(1px 1px at 60% 90%, white 1px, transparent 0), radial-gradient(1.5px 1.5px at 90% 25%, white 1px, transparent 0), radial-gradient(1px 1px at 40% 40%, white 1px, transparent 0), radial-gradient(1px 1px at 75% 85%, white 1px, transparent 0);">
+    </div>
+    <div class="relative container-custom text-center">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/20 text-indigo-300 text-sm font-medium mb-6">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-400"></span>
+        </span>
+        {t(locale, 'demo.poweredBy')}
+      </div>
+      <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">{t(locale, 'demo.heroTitle')}</h1>
+      <p class="mt-4 text-lg text-indigo-200/80 max-w-2xl mx-auto" set:html={t(locale, 'demo.heroDesc')} />
+    </div>
+  </section>
+
+  <!-- ───────────── Loading overlay ───────────── -->
+  <div id="wasm-loading" class="py-20 text-center">
+    <div class="inline-flex items-center gap-3 text-gray-500 dark:text-gray-400">
+      <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+      {t(locale, 'demo.loading')}
+    </div>
+  </div>
+  <div id="wasm-error" class="hidden py-20 text-center">
+    <p class="text-red-500 dark:text-red-400 font-medium">{t(locale, 'demo.loadError')}</p>
+  </div>
+
+  <!-- ───────────── Main Lab (hidden until WASM ready) ───────────── -->
+  <div id="lab-root" class="hidden">
+
+    <!-- Tab navigation -->
+    <div class="sticky top-16 z-40 border-b border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-950/90 backdrop-blur-lg">
+      <div class="container-custom">
+        <nav class="flex gap-1 overflow-x-auto py-2 -mb-px" role="tablist" aria-label="Lab tools">
+          <button role="tab" aria-selected="true" aria-controls="panel-sky" id="tab-sky"
+            class="tab-btn tab-active px-4 py-2.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors">
+            <svg class="w-4 h-4 inline-block mr-1.5 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+            {t(locale, 'demo.tabSkyPlot')}
+          </button>
+          <button role="tab" aria-selected="false" aria-controls="panel-coords" id="tab-coords"
+            class="tab-btn px-4 py-2.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <svg class="w-4 h-4 inline-block mr-1.5 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+            {t(locale, 'demo.tabCoords')}
+          </button>
+          <button role="tab" aria-selected="false" aria-controls="panel-time" id="tab-time"
+            class="tab-btn px-4 py-2.5 text-sm font-medium rounded-lg whitespace-nowrap transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <svg class="w-4 h-4 inline-block mr-1.5 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            {t(locale, 'demo.tabTime')}
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <!-- ══════════════ SKY PLOT PANEL ══════════════ -->
+    <section id="panel-sky" role="tabpanel" aria-labelledby="tab-sky" class="py-8 md:py-12">
+      <div class="container-custom">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{t(locale, 'demo.skyPlotTitle')}</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-2xl text-sm">{t(locale, 'demo.skyPlotDesc')}</p>
+
+        <div class="grid xl:grid-cols-3 gap-6 items-start mb-6">
+          <!-- Observer -->
+          <div class="card p-4 h-full">
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{t(locale, 'demo.observer')}</h3>
+              <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t(locale, 'demo.observerPreset')}</label>
+              <select id="sky-obs-preset" class="demo-select w-full">
+                <option value="roqueDeLasMuchachos" selected>Roque de los Muchachos</option>
+                <option value="elParanal">Paranal</option>
+                <option value="maunaKea">Mauna Kea</option>
+                <option value="laSilla">La Silla</option>
+                <option value="custom">{t(locale, 'demo.observerCustom')}</option>
+              </select>
+              <div id="sky-obs-custom" class="hidden mt-3 space-y-2">
+                <div>
+                  <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.longitude')}</label>
+                  <input id="sky-obs-lon" type="number" step="any" value="-17.8925" class="demo-input w-full" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.latitude')}</label>
+                  <input id="sky-obs-lat" type="number" step="any" value="28.7543" class="demo-input w-full" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.height')}</label>
+                  <input id="sky-obs-h" type="number" step="any" value="2396" class="demo-input w-full" />
+                </div>
+              </div>
+          </div>
+
+          <!-- Target -->
+          <div class="card p-4 h-full">
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{t(locale, 'demo.target')}</h3>
+              <select id="sky-target-type" class="demo-select w-full mb-2">
+                <option value="body" selected>{t(locale, 'demo.targetBody')}</option>
+                <option value="star">{t(locale, 'demo.targetStar')}</option>
+                <option value="custom">{t(locale, 'demo.targetCustom')}</option>
+              </select>
+              <div id="sky-target-body-wrap">
+                <select id="sky-body" class="demo-select w-full"></select>
+              </div>
+              <div id="sky-target-star-wrap" class="hidden">
+                <select id="sky-star" class="demo-select w-full"></select>
+              </div>
+              <div id="sky-target-custom-wrap" class="hidden space-y-2">
+                <div>
+                  <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.customName')}</label>
+                  <input id="sky-custom-name" type="text" value="Custom Target" class="demo-input w-full" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.customRa')}</label>
+                  <input id="sky-custom-ra" type="number" step="any" value="83.6333" class="demo-input w-full" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.customDec')}</label>
+                  <input id="sky-custom-dec" type="number" step="any" value="22.0145" class="demo-input w-full" />
+                </div>
+              </div>
+          </div>
+
+          <!-- Time -->
+          <div class="card p-4 space-y-3 h-full">
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.date')}</label>
+                <input id="sky-date" type="date" class="demo-input w-full" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.horizon')}</label>
+                <input id="sky-horizon" type="number" step="any" value="0" class="demo-input w-full" />
+              </div>
+              <div class="pt-1">
+                <button id="sky-share-btn" type="button" class="btn-primary w-full py-2 text-sm">
+                  <svg class="w-4 h-4 inline-block mr-1.5 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 015.656 5.656l-3 3a4 4 0 01-5.656-5.656m-1.656 1.656a4 4 0 00-5.656 5.656l3 3a4 4 0 005.656-5.656" /></svg>
+                  {t(locale, 'demo.copyShareLink')}
+                </button>
+                <span id="sky-share-status" class="hidden block mt-1 text-xs text-emerald-600 dark:text-emerald-400 text-center"></span>
+              </div>
+          </div>
+        </div>
+
+        <div class="space-y-6 min-w-0">
+          <div class="card p-4">
+              <div id="chart-altitude" class="w-full" style="height:380px" role="img" aria-label={t(locale, 'demo.altChartAriaLabel')}>
+                <div class="flex items-center justify-center h-full text-gray-400 dark:text-gray-600 text-sm">{t(locale, 'demo.altitudeChart')}</div>
+              </div>
+          </div>
+          <div class="card p-4">
+              <div id="chart-azimuth" class="w-full" style="height:380px" role="img" aria-label={t(locale, 'demo.azChartAriaLabel')}>
+                <div class="flex items-center justify-center h-full text-gray-400 dark:text-gray-600 text-sm">{t(locale, 'demo.azimuthChart')}</div>
+              </div>
+          </div>
+          <div class="card p-4">
+              <div class="flex flex-wrap items-center gap-2 mb-3 text-xs">
+                <span class="text-gray-500 dark:text-gray-400 font-medium pr-1">{t(locale, 'demo.skyLayers')}:</span>
+                <label class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 cursor-pointer select-none">
+                  <input type="checkbox" id="sky-toggle-horizon" class="accent-amber-500 w-3.5 h-3.5" />
+                  <span class="text-gray-700 dark:text-gray-200">{t(locale, 'demo.skyToggleHorizon')}</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 cursor-pointer select-none">
+                  <input type="checkbox" id="sky-toggle-threshold" class="accent-red-500 w-3.5 h-3.5" checked />
+                  <span class="text-gray-700 dark:text-gray-200">{t(locale, 'demo.skyToggleThreshold')}</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 cursor-pointer select-none">
+                  <input type="checkbox" id="sky-toggle-stars" class="accent-indigo-400 w-3.5 h-3.5" checked />
+                  <span class="text-gray-700 dark:text-gray-200">{t(locale, 'demo.skyToggleStars')}</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 cursor-pointer select-none">
+                  <input type="checkbox" id="sky-toggle-grid" class="accent-blue-400 w-3.5 h-3.5" checked />
+                  <span class="text-gray-700 dark:text-gray-200">{t(locale, 'demo.skyToggleGrid')}</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 cursor-pointer select-none">
+                  <input type="checkbox" id="sky-toggle-labels" class="accent-amber-400 w-3.5 h-3.5" checked />
+                  <span class="text-gray-700 dark:text-gray-200">{t(locale, 'demo.skyToggleLabels')}</span>
+                </label>
+              </div>
+              <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">{t(locale, 'demo.skySphereHint')}</p>
+              <div id="chart-skysphere" class="w-full relative rounded-md overflow-hidden" style="height:480px; background:#06091c" role="img" aria-label={t(locale, 'demo.skySphereAriaLabel')}>
+                <div id="chart-skysphere-fallback" class="flex items-center justify-center h-full text-gray-400 dark:text-gray-600 text-sm">{t(locale, 'demo.skySphere')}</div>
+              </div>
+          </div>
+        </div>
+
+        <div class="card p-4 space-y-3 mt-6">
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{t(locale, 'demo.events')}</h3>
+          <div id="sky-special" class="hidden"></div>
+          <div id="sky-events"></div>
+          <div id="sky-moon-phase" class="hidden"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ COORDINATE PLAYGROUND ══════════════ -->
+    <section id="panel-coords" role="tabpanel" aria-labelledby="tab-coords" class="hidden py-8 md:py-12">
+      <div class="container-custom">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{t(locale, 'demo.coordsTitle')}</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-2xl text-sm">{t(locale, 'demo.coordsDesc')}</p>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Direction Transform -->
+          <div class="card p-5 space-y-4">
+            <h3 class="font-semibold text-gray-900 dark:text-white">{t(locale, 'demo.dirTransform')}</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.fromFrame')}</label>
+                <select id="dir-from" class="demo-select w-full">
+                  <option value="ICRS" selected>ICRS</option>
+                  <option value="EclipticMeanJ2000">Ecliptic Mean J2000</option>
+                  <option value="EquatorialMeanJ2000">Equatorial Mean J2000</option>
+                  <option value="EquatorialMeanOfDate">Equatorial Mean of Date</option>
+                  <option value="EquatorialTrueOfDate">Equatorial True of Date</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.toFrame')}</label>
+                <select id="dir-to" class="demo-select w-full">
+                  <option value="ICRS">ICRS</option>
+                  <option value="EclipticMeanJ2000" selected>Ecliptic Mean J2000</option>
+                  <option value="EquatorialMeanJ2000">Equatorial Mean J2000</option>
+                  <option value="EquatorialMeanOfDate">Equatorial Mean of Date</option>
+                  <option value="EquatorialTrueOfDate">Equatorial True of Date</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.polar')}</label>
+                <input id="dir-polar" type="number" step="any" value="90" class="demo-input w-full" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.azimuthInput')}</label>
+                <input id="dir-azimuth" type="number" step="any" value="45" class="demo-input w-full" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.epoch')}</label>
+                <input id="dir-epoch" type="number" step="any" value="2451545.0" class="demo-input w-full" />
+              </div>
+            </div>
+            <button id="dir-go" class="btn-primary w-full py-2 text-sm hidden">{t(locale, 'demo.transform')}</button>
+            <div id="dir-result" class="hidden bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 text-sm font-mono space-y-1"></div>
+          </div>
+
+          <!-- Local Horizontal -->
+          <div class="card p-5 space-y-4">
+            <h3 class="font-semibold text-gray-900 dark:text-white">{t(locale, 'demo.localHorizontal')}</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{t(locale, 'demo.localHorizontalDesc')}</p>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.fromFrame')}</label>
+                <select id="hor-frame" class="demo-select w-full">
+                  <option value="ICRS" selected>ICRS</option>
+                  <option value="EclipticMeanJ2000">Ecliptic Mean J2000</option>
+                  <option value="EquatorialMeanJ2000">Equatorial Mean J2000</option>
+                  <option value="EquatorialMeanOfDate">Equatorial Mean of Date</option>
+                  <option value="EquatorialTrueOfDate">Equatorial True of Date</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.epoch')}</label>
+                <input id="hor-epoch" type="number" step="any" value="2451545.0" class="demo-input w-full" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.polar')}</label>
+                <input id="hor-polar" type="number" step="any" value="83.6333" class="demo-input w-full" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.azimuthInput')}</label>
+                <input id="hor-azimuth" type="number" step="any" value="22.0145" class="demo-input w-full" />
+              </div>
+            </div>
+            <div class="border-t border-gray-200 dark:border-gray-800 pt-3">
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">{t(locale, 'demo.observer')}</label>
+              <select id="hor-obs-preset" class="demo-select w-full">
+                <option value="roqueDeLasMuchachos" selected>Roque de los Muchachos</option>
+                <option value="elParanal">Paranal</option>
+                <option value="maunaKea">Mauna Kea</option>
+                <option value="laSilla">La Silla</option>
+              </select>
+            </div>
+            <button id="hor-go" class="btn-primary w-full py-2 text-sm hidden">{t(locale, 'demo.transform')}</button>
+            <div id="hor-result" class="hidden bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 text-sm font-mono space-y-1"></div>
+          </div>
+
+          <!-- Position Transform -->
+          <div class="card p-5 space-y-4 md:col-span-2">
+            <h3 class="font-semibold text-gray-900 dark:text-white">{t(locale, 'demo.posTransform')}</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{t(locale, 'demo.posTransformDesc')}</p>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.body')}</label>
+                <select id="pos-body" class="demo-select w-full"></select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.epoch')}</label>
+                <input id="pos-epoch" type="number" step="any" value="2451545.0" class="demo-input w-full" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.toCenter')}</label>
+                <select id="pos-center" class="demo-select w-full">
+                  <option value="Barycentric" selected>Barycentric</option>
+                  <option value="Heliocentric">Heliocentric</option>
+                  <option value="Geocentric">Geocentric</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.toFrame')}</label>
+                <select id="pos-frame" class="demo-select w-full">
+                  <option value="ICRS" selected>ICRS</option>
+                  <option value="EclipticMeanJ2000">Ecliptic Mean J2000</option>
+                  <option value="EquatorialMeanJ2000">Equatorial Mean J2000</option>
+                  <option value="EquatorialMeanOfDate">Equatorial Mean of Date</option>
+                  <option value="EquatorialTrueOfDate">Equatorial True of Date</option>
+                </select>
+              </div>
+            </div>
+            <button id="pos-go" class="btn-primary py-2 px-8 text-sm hidden">{t(locale, 'demo.transform')}</button>
+            <div id="pos-result" class="hidden bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 text-sm font-mono space-y-1"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ TIME LAB ══════════════ -->
+    <section id="panel-time" role="tabpanel" aria-labelledby="tab-time" class="hidden py-8 md:py-12">
+      <div class="container-custom">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{t(locale, 'demo.timeTitle')}</h2>
+        <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-2xl text-sm">{t(locale, 'demo.timeDesc')}</p>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- UTC ↔ JD/MJD converter -->
+          <div class="card p-5 space-y-4">
+            <h3 class="font-semibold text-gray-900 dark:text-white">{t(locale, 'demo.utcInput')}</h3>
+            <input id="time-utc" type="datetime-local" step="1" class="demo-input w-full" />
+            <button id="time-convert" class="btn-primary w-full py-2 text-sm">{t(locale, 'demo.convert')}</button>
+            <div id="time-result" class="hidden space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                  <p class="text-xs text-gray-500 dark:text-gray-400">{t(locale, 'demo.julianDate')}</p>
+                  <p id="time-jd" class="font-mono text-sm text-gray-900 dark:text-white mt-1"></p>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                  <p class="text-xs text-gray-500 dark:text-gray-400">{t(locale, 'demo.modifiedJulianDate')}</p>
+                  <p id="time-mjd" class="font-mono text-sm text-gray-900 dark:text-white mt-1"></p>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                  <p class="text-xs text-gray-500 dark:text-gray-400">{t(locale, 'demo.julianCenturies')}</p>
+                  <p id="time-jc" class="font-mono text-sm text-gray-900 dark:text-white mt-1"></p>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                  <p class="text-xs text-gray-500 dark:text-gray-400">{t(locale, 'demo.julianYears')}</p>
+                  <p id="time-jy" class="font-mono text-sm text-gray-900 dark:text-white mt-1"></p>
+                </div>
+              </div>
+              <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 dark:text-gray-400">UTC (round-trip)</p>
+                <p id="time-roundtrip" class="font-mono text-sm text-gray-900 dark:text-white mt-1"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Observation Period -->
+          <div class="card p-5 space-y-4">
+            <h3 class="font-semibold text-gray-900 dark:text-white">{t(locale, 'demo.periodTitle')}</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.periodStart')}</label>
+                <input id="period-start" type="datetime-local" step="1" class="demo-input w-full" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.periodEnd')}</label>
+                <input id="period-end" type="datetime-local" step="1" class="demo-input w-full" />
+              </div>
+            </div>
+            <button id="period-create" class="btn-primary w-full py-2 text-sm">{t(locale, 'demo.periodCreate')}</button>
+            <div id="period-result" class="hidden space-y-3">
+              <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 dark:text-gray-400">{t(locale, 'demo.periodDuration')}</p>
+                <p id="period-duration" class="font-mono text-sm text-gray-900 dark:text-white mt-1"></p>
+              </div>
+              <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 dark:text-gray-400">MJD range</p>
+                <p id="period-mjd-range" class="font-mono text-sm text-gray-900 dark:text-white mt-1"></p>
+              </div>
+              <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                <p class="text-xs text-gray-500 dark:text-gray-400">UTC (round-trip)</p>
+                <p id="period-utc-roundtrip" class="font-mono text-sm text-gray-900 dark:text-white mt-1"></p>
+              </div>
+            </div>
+
+            <!-- Intersection -->
+            <div class="border-t border-gray-200 dark:border-gray-800 pt-4 mt-4">
+              <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{t(locale, 'demo.periodIntersection')}</h4>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.periodStart')} (B)</label>
+                  <input id="period-b-start" type="datetime-local" step="1" class="demo-input w-full" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t(locale, 'demo.periodEnd')} (B)</label>
+                  <input id="period-b-end" type="datetime-local" step="1" class="demo-input w-full" />
+                </div>
+              </div>
+              <button id="period-intersect" class="btn-primary w-full py-2 text-sm mt-3">{t(locale, 'demo.periodIntersect')}</button>
+              <div id="period-intersection-result" class="hidden bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 mt-3">
+                <p id="period-intersection-text" class="font-mono text-sm text-gray-900 dark:text-white"></p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── Powered-by footer ───────────── -->
+    <section class="py-10 bg-gray-50 dark:bg-gray-900/50">
+      <div class="container-custom text-center">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          {t(locale, 'demo.poweredByDesc')}
+        </p>
+        <p class="text-xs text-gray-400 dark:text-gray-600 mt-2">
+          {t(locale, 'demo.version')}: <span id="engine-version" class="font-mono"></span>
+        </p>
+      </div>
+    </section>
+
+  </div><!-- /lab-root -->
+
+  <!-- ═══════════════ Import map for vendored WASM packages ═══════════════ -->
+  <script slot="head" is:inline type="importmap">
+  {
+    "imports": {
+      "@siderust/qtty-web":     "/vendor/qtty-web/index.js",
+      "@siderust/qtty-web/":    "/vendor/qtty-web/",
+      "@siderust/tempoch-web":  "/vendor/tempoch-web/index.js",
+      "@siderust/tempoch-web/": "/vendor/tempoch-web/",
+      "@siderust/siderust-web": "/vendor/siderust-web/index.js",
+      "@siderust/siderust-web/": "/vendor/siderust-web/",
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
+
+</Layout>
+
+<!-- ═══════════════ Plotly.js CDN (cartesian bundle for the 2D charts) ═══════════════ -->
+<script is:inline src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+<!-- ═══════════════ Page styles ═══════════════ -->
+<style is:inline>
+  .demo-input {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    background: white;
+    font-size: 0.8125rem;
+    color: #111827;
+    transition: border-color 0.15s;
+  }
+  .demo-input:focus {
+    outline: none;
+    border-color: #e8590c;
+    box-shadow: 0 0 0 3px rgba(232,89,12,0.1);
+  }
+  .demo-select {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    background: white;
+    font-size: 0.8125rem;
+    color: #111827;
+    cursor: pointer;
+  }
+  .demo-select:focus {
+    outline: none;
+    border-color: #e8590c;
+    box-shadow: 0 0 0 3px rgba(232,89,12,0.1);
+  }
+  html.dark .demo-input,
+  html.dark .demo-select {
+    background: #111827;
+    border-color: #374151;
+    color: #f3f4f6;
+  }
+  html.dark .demo-input:focus,
+  html.dark .demo-select:focus {
+    border-color: #e8590c;
+    box-shadow: 0 0 0 3px rgba(232,89,12,0.15);
+  }
+  .tab-active {
+    background: rgba(232,89,12,0.1);
+    color: #e8590c;
+  }
+  html.dark .tab-active {
+    background: rgba(232,89,12,0.15);
+    color: #fb923c;
+  }
+  .events-table-wrap {
+    overflow-x: auto;
+  }
+  .events-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .events-table th,
+  .events-table td {
+    padding: 0.5rem 0.5rem 0.5rem 0;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.75rem;
+  }
+  .events-table th {
+    color: #6b7280;
+    font-weight: 600;
+  }
+  .events-table td {
+    color: #111827;
+  }
+  .events-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .events-table th:nth-child(1),
+  .events-table td:nth-child(1) {
+    width: 24%;
+  }
+  .events-table th:nth-child(2),
+  .events-table td:nth-child(2) {
+    width: 42%;
+  }
+  .events-table th:nth-child(3),
+  .events-table td:nth-child(3) {
+    width: 17%;
+  }
+  .events-table th:nth-child(4),
+  .events-table td:nth-child(4) {
+    width: 17%;
+  }
+  .events-table .event-kind {
+    font-weight: 600;
+  }
+  .events-table .event-altitude {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+  .events-table .event-time-inner {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    display: grid;
+    grid-template-columns: 10ch 12ch;
+    column-gap: 0.75rem;
+    align-items: baseline;
+    white-space: nowrap;
+  }
+  .events-table .event-date,
+  .events-table .event-clock {
+    display: block;
+  }
+  .events-table .event-clock {
+    color: #6b7280;
+  }
+  html.dark .events-table th,
+  html.dark .events-table td {
+    border-bottom-color: #374151;
+  }
+  html.dark .events-table th {
+    color: #9ca3af;
+  }
+  html.dark .events-table td {
+    color: #f3f4f6;
+  }
+  html.dark .events-table .event-clock {
+    color: #9ca3af;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  #chart-skysphere canvas {
+    display: block;
+    height: 100%;
+    touch-action: none;
+    width: 100%;
+  }
+</style>
+
+<!-- ═══════════════ Demo application logic ═══════════════ -->
+<script is:inline data-locale={locale} data-demo-i18n={demoClientI18n}>
+(async function () {
+  'use strict';
+
+  /* ─── i18n helper (reads keys from this script tag) ─── */
+  var SCRIPT = document.currentScript;
+  var LOCALE = SCRIPT?.getAttribute('data-locale') || 'en';
+  var I18N = JSON.parse(SCRIPT?.getAttribute('data-demo-i18n') || '{}');
+  function tr(key, fallback, params) {
+    var value = I18N[key] || fallback;
+    if (params) {
+      Object.keys(params).forEach(function (paramKey) {
+        value = value.replace(new RegExp('\\{' + paramKey + '\\}', 'g'), String(params[paramKey]));
+      });
+    }
+    return value;
+  }
+  function pad2(value) {
+    return String(value).padStart(2, '0');
+  }
+  function formatUtcDateTimeCell(date) {
+    return '<span class="event-date">' +
+      date.getUTCFullYear() + '-' +
+      pad2(date.getUTCMonth() + 1) + '-' +
+      pad2(date.getUTCDate()) +
+      '</span><span class="event-clock">' +
+      pad2(date.getUTCHours()) + ':' +
+      pad2(date.getUTCMinutes()) + ':' +
+      pad2(date.getUTCSeconds()) + ' UTC</span>';
+  }
+
+  /* ─── Theme helpers (reused from benchmarks) ─── */
+  var dark = document.documentElement.classList.contains('dark');
+  function fg()   { return dark ? '#d1d5db' : '#374151'; }
+  function grid() { return dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'; }
+  function plotBg() { return 'rgba(0,0,0,0)'; }
+  var BRAND = '#e8590c';
+  var BLUE  = '#3b82f6';
+  var DEG2RAD = Math.PI / 180;
+  function baseLayout() {
+    return {
+      paper_bgcolor: plotBg(),
+      plot_bgcolor:  plotBg(),
+      font: { family: 'Inter, system-ui, sans-serif', color: fg(), size: 12 },
+      margin: { l: 55, r: 20, t: 36, b: 50 },
+    };
+  }
+  var PCFG = { responsive: true, displaylogo: false, displayModeBar: false };
+
+  /* ─── Tab switching ─── */
+  var tabs = ['sky', 'coords', 'time'];
+  tabs.forEach(function (id) {
+    var btn = document.getElementById('tab-' + id);
+    btn?.addEventListener('click', function () {
+      tabs.forEach(function (other) {
+        var ob = document.getElementById('tab-' + other);
+        var op = document.getElementById('panel-' + other);
+        if (other === id) {
+          ob?.classList.add('tab-active');
+          ob?.classList.remove('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-900', 'dark:hover:text-white', 'hover:bg-gray-50', 'dark:hover:bg-gray-800/50');
+          ob?.setAttribute('aria-selected', 'true');
+          op?.classList.remove('hidden');
+        } else {
+          ob?.classList.remove('tab-active');
+          ob?.classList.add('text-gray-500', 'dark:text-gray-400', 'hover:text-gray-900', 'dark:hover:text-white', 'hover:bg-gray-50', 'dark:hover:bg-gray-800/50');
+          ob?.setAttribute('aria-selected', 'false');
+          op?.classList.add('hidden');
+        }
+      });
+    });
+  });
+
+  /* ─── WASM initialisation ─── */
+  var siderust, qtty, tempoch, THREE;
+  try {
+    // These modules are vendored into /public/vendor for the website demo.
+    // Load them via browser URLs so Vite does not try to resolve them from npm.
+    siderust = await import(/* @vite-ignore */ '/vendor/siderust-web/index.js');
+    qtty     = await import(/* @vite-ignore */ '/vendor/qtty-web/index.js');
+    tempoch  = await import(/* @vite-ignore */ '/vendor/tempoch-web/index.js');
+    THREE    = await import(/* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
+
+    await siderust.init();
+
+    document.getElementById('wasm-loading')?.classList.add('hidden');
+    document.getElementById('lab-root')?.classList.remove('hidden');
+
+    var verEl = document.getElementById('engine-version');
+    if (verEl) verEl.textContent = siderust.version();
+  } catch (err) {
+    console.error('WASM init failed', err);
+    document.getElementById('wasm-loading')?.classList.add('hidden');
+    document.getElementById('wasm-error')?.classList.remove('hidden');
+    return;
+  }
+
+  /* ─── Utility functions ─── */
+  var DEG = function (v) { return new qtty.Quantity(v, 'Degree'); };
+  var M   = function (v) { return new qtty.Quantity(v, 'Meter'); };
+  var AU  = function (v) { return new qtty.Quantity(v, 'AstronomicalUnit'); };
+
+  function makeObserver(preset) {
+    switch (preset) {
+      case 'roqueDeLasMuchachos': return siderust.Observer.roqueDeLasMuchachos();
+      case 'elParanal':          return siderust.Observer.elParanal();
+      case 'maunaKea':           return siderust.Observer.maunaKea();
+      case 'laSilla':            return siderust.Observer.laSilla();
+      default: return null;
+    }
+  }
+
+  var skyViewState = null;
+  var skySphereHost = document.getElementById('chart-skysphere');
+  var skySphereFallback = document.getElementById('chart-skysphere-fallback');
+  var skyThree = null;
+  var SKY_TOGGLE_IDS = [
+    'sky-toggle-horizon',
+    'sky-toggle-threshold',
+    'sky-toggle-stars',
+    'sky-toggle-grid',
+    'sky-toggle-labels',
+  ];
+  var STATIC_SKY_STARS = buildStaticSkyStars(180);
+
+  function buildStaticSkyStars(count) {
+    var seed = 0x51d3c0de;
+    function rand() {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 4294967296;
+    }
+    var out = [];
+    for (var i = 0; i < count; i++) {
+      out.push({
+        azimuth: rand() * 360,
+        altitude: Math.asin(rand()) / DEG2RAD,
+        size: 0.6 + rand() * 1.8,
+        alpha: 0.22 + rand() * 0.58,
+        tint: rand(),
+      });
+    }
+    return out;
+  }
+
+  function getSkyLayerOptions() {
+    function checked(id, fallback) {
+      var el = document.getElementById(id);
+      return el ? el.checked : fallback;
+    }
+    return {
+      showHorizon: checked('sky-toggle-horizon', false),
+      showThreshold: checked('sky-toggle-threshold', true),
+      showStars: checked('sky-toggle-stars', true),
+      showGrid: checked('sky-toggle-grid', true),
+      showLabels: checked('sky-toggle-labels', true),
+    };
+  }
+
+  function horizontalToVector(azimuthDeg, altitudeDeg, radius) {
+    var azimuthRad = azimuthDeg * DEG2RAD;
+    var altitudeRad = altitudeDeg * DEG2RAD;
+    var cAlt = Math.cos(altitudeRad);
+    return new THREE.Vector3(
+      radius * cAlt * Math.sin(azimuthRad),
+      radius * Math.sin(altitudeRad),
+      radius * cAlt * Math.cos(azimuthRad)
+    );
+  }
+
+  function disposeSkyObject(object) {
+    object.traverse(function (node) {
+      if (node.geometry) node.geometry.dispose();
+      if (node.material) {
+        var materials = Array.isArray(node.material) ? node.material : [node.material];
+        materials.forEach(function (material) {
+          if (material.map) material.map.dispose();
+          material.dispose();
+        });
+      }
+    });
+  }
+
+  function clearSkyLayer(name) {
+    if (!skyThree || !skyThree.layers[name]) return;
+    var layer = skyThree.layers[name];
+    skyThree.scene.remove(layer);
+    disposeSkyObject(layer);
+    skyThree.layers[name] = null;
+  }
+
+  function createSkyLine(points, color, opacity, dashed) {
+    if (points.length < 2) return new THREE.Group();
+    var group = new THREE.Group();
+    var material = new THREE.MeshBasicMaterial({
+      color: color,
+      opacity: opacity,
+      side: THREE.DoubleSide,
+      transparent: opacity < 1,
+      depthTest: false,
+      depthWrite: false,
+    });
+
+    function addTube(segmentPoints) {
+      if (segmentPoints.length < 2) return;
+      var curve = new THREE.CatmullRomCurve3(segmentPoints, false, 'centripetal');
+      var geometry = new THREE.TubeGeometry(curve, Math.max(8, segmentPoints.length * 2), dashed ? 0.28 : 0.18, 8, false);
+      var mesh = new THREE.Mesh(geometry, material);
+      mesh.renderOrder = 20;
+      group.add(mesh);
+    }
+
+    if (!dashed) {
+      addTube(points);
+      return group;
+    }
+
+    var dash = [];
+    for (var i = 0; i < points.length; i++) {
+      if (Math.floor(i / 5) % 2 === 0) {
+        dash.push(points[i]);
+      } else {
+        addTube(dash);
+        dash = [];
+      }
+    }
+    addTube(dash);
+    return group;
+  }
+
+  function createSkyRing(altitudeDeg, radius, color, opacity, dashed) {
+    var points = [];
+    for (var i = 0; i <= 192; i++) {
+      points.push(horizontalToVector((i / 192) * 360, altitudeDeg, radius));
+    }
+    return createSkyLine(points, color, opacity, dashed);
+  }
+
+  function createSkyTextSprite(text, color, scale) {
+    var canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = color;
+    ctx.font = '600 64px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+    var texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    var material = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+    });
+    var sprite = new THREE.Sprite(material);
+    sprite.renderOrder = 30;
+    sprite.scale.set(scale * 2, scale, 1);
+    return sprite;
+  }
+
+  function colorFromRgbString(rgb, fallback) {
+    var match = /^(\d+),\s*(\d+),\s*(\d+)$/.exec(rgb || '');
+    if (!match) return new THREE.Color(fallback);
+    return new THREE.Color(
+      parseInt(match[1], 10) / 255,
+      parseInt(match[2], 10) / 255,
+      parseInt(match[3], 10) / 255
+    );
+  }
+
+  function buildThreeStarsLayer(radius) {
+    var geometry = new THREE.BufferGeometry();
+    var positions = [];
+    var colors = [];
+    STATIC_SKY_STARS.forEach(function (star) {
+      var point = horizontalToVector(star.azimuth, Math.max(0.5, star.altitude), radius);
+      var color = star.tint > 0.82
+        ? '255, 232, 196'
+        : (star.tint > 0.34 ? '244, 247, 255' : '186, 217, 255');
+      var c = colorFromRgbString(color, '#f8fafc');
+      positions.push(point.x, point.y, point.z);
+      colors.push(c.r * star.alpha, c.g * star.alpha, c.b * star.alpha);
+    });
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    var points = new THREE.Points(geometry, new THREE.PointsMaterial({
+      size: 1.7,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.96,
+      depthTest: false,
+      depthWrite: false,
+    }));
+    points.renderOrder = 15;
+    return points;
+  }
+
+  function buildThreeGridLayer(radius) {
+    var group = new THREE.Group();
+    [15, 30, 45, 60, 75].forEach(function (altitude) {
+      group.add(createSkyRing(altitude, radius, 0xb4c8ff, 0.22, false));
+    });
+    for (var azimuth = 0; azimuth < 360; azimuth += 30) {
+      var points = [];
+      for (var i = 0; i <= 72; i++) {
+        points.push(horizontalToVector(azimuth, (i / 72) * 90, radius));
+      }
+      group.add(createSkyLine(points, 0xb4c8ff, 0.16, false));
+    }
+    return group;
+  }
+
+  function buildThreeThresholdLayer(thresholdDeg, radius, showLabels) {
+    var group = new THREE.Group();
+    var clampedThreshold = Math.max(0, Math.min(89.5, thresholdDeg));
+    group.add(createSkyRing(clampedThreshold, radius + 0.15, 0xf87171, 0.95, true));
+
+    if (thresholdDeg > 0) {
+      var vertices = [];
+      var indices = [];
+      var stepsAz = 96;
+      var stepsAlt = 8;
+      for (var a = 0; a <= stepsAz; a++) {
+        for (var h = 0; h <= stepsAlt; h++) {
+          var alt = (h / stepsAlt) * clampedThreshold;
+          var point = horizontalToVector((a / stepsAz) * 360, alt, radius - 0.1);
+          vertices.push(point.x, point.y, point.z);
+        }
+      }
+      var row = stepsAlt + 1;
+      for (var ia = 0; ia < stepsAz; ia++) {
+        for (var ih = 0; ih < stepsAlt; ih++) {
+          var p = ia * row + ih;
+          indices.push(p, p + row, p + 1);
+          indices.push(p + 1, p + row, p + row + 1);
+        }
+      }
+      var geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+      group.add(new THREE.Mesh(
+        geometry,
+        new THREE.MeshBasicMaterial({
+          color: 0xef4444,
+          opacity: 0.12,
+          side: THREE.DoubleSide,
+          transparent: true,
+          depthWrite: false,
+        })
+      ));
+    }
+
+    if (showLabels) {
+      var label = createSkyTextSprite(thresholdDeg.toFixed(1) + ' deg', '#fca5a5', 6.8);
+      label.position.copy(horizontalToVector(75, clampedThreshold + 2, radius - 3));
+      group.add(label);
+    }
+    return group;
+  }
+
+  function buildThreeTrajectoryLayer(state, radius) {
+    var group = new THREE.Group();
+    var abovePoints = [];
+    var belowThresholdPoints = [];
+    var firstVisible = null;
+    var lastVisible = null;
+
+    function flushSegments() {
+      if (abovePoints.length > 1) group.add(createSkyLine(abovePoints, 0xff944d, 1, false));
+      if (belowThresholdPoints.length > 1) group.add(createSkyLine(belowThresholdPoints, 0x94a3b8, 0.55, false));
+      abovePoints = [];
+      belowThresholdPoints = [];
+    }
+
+    for (var i = 0; i < state.altitudes.length; i++) {
+      var altitude = state.altitudes[i];
+      if (!Number.isFinite(altitude) || altitude < 0) {
+        flushSegments();
+        continue;
+      }
+      var point = horizontalToVector(state.azimuths[i], altitude, radius - 1.5);
+      if (!firstVisible) firstVisible = { index: i, point: point };
+      lastVisible = { index: i, point: point };
+      if (altitude >= state.thresholdDeg) {
+        if (belowThresholdPoints.length > 1) group.add(createSkyLine(belowThresholdPoints, 0x94a3b8, 0.55, false));
+        belowThresholdPoints = [];
+        abovePoints.push(point);
+      } else {
+        if (abovePoints.length > 1) group.add(createSkyLine(abovePoints, 0xff944d, 1, false));
+        abovePoints = [];
+        belowThresholdPoints.push(point);
+      }
+    }
+    flushSegments();
+
+    function addMarker(marker, color) {
+      if (!marker) return;
+      var markerMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(1.1, 16, 8),
+        new THREE.MeshBasicMaterial({ color: color, depthTest: false })
+      );
+      markerMesh.position.copy(marker.point);
+      group.add(markerMesh);
+      if (state.options.showLabels) {
+        var hours = state.hoursOfDay[marker.index];
+        var wholeHours = Math.floor(hours);
+        var minutes = Math.round((hours - wholeHours) * 60);
+        var label = createSkyTextSprite(pad2(wholeHours) + ':' + pad2(minutes), '#f8fafc', 5.2);
+        label.position.copy(marker.point.clone().multiplyScalar(0.96));
+        group.add(label);
+      }
+    }
+
+    addMarker(firstVisible, 0xfb923c);
+    addMarker(lastVisible, 0xfde68a);
+    return group;
+  }
+
+  function buildThreeLabelsLayer(radius) {
+    var group = new THREE.Group();
+    [
+      { text: 'N', azimuth: 0, altitude: 2 },
+      { text: 'E', azimuth: 90, altitude: 2 },
+      { text: 'S', azimuth: 180, altitude: 2 },
+      { text: 'W', azimuth: 270, altitude: 2 },
+      { text: 'Z', azimuth: 0, altitude: 88 },
+    ].forEach(function (label) {
+      var sprite = createSkyTextSprite(label.text, '#fbbf24', 5.8);
+      sprite.position.copy(horizontalToVector(label.azimuth, label.altitude, radius - 4));
+      group.add(sprite);
+    });
+    return group;
+  }
+
+  function updateSkyCamera() {
+    if (!skyThree) return;
+    var look = skyThree.look;
+    look.pitch = Math.max(-5 * DEG2RAD, Math.min(86 * DEG2RAD, look.pitch));
+    var direction = new THREE.Vector3(
+      Math.cos(look.pitch) * Math.sin(look.yaw),
+      Math.sin(look.pitch),
+      Math.cos(look.pitch) * Math.cos(look.yaw)
+    );
+    skyThree.camera.position.set(0, 0, 0);
+    skyThree.camera.lookAt(direction);
+    skyThree.camera.fov = look.fov;
+    skyThree.camera.updateProjectionMatrix();
+  }
+
+  function resizeSkyThree() {
+    if (!skyThree || !skySphereHost) return false;
+    var bounds = skySphereHost.getBoundingClientRect();
+    if (!bounds.width || !bounds.height) return false;
+    skyThree.camera.aspect = bounds.width / bounds.height;
+    skyThree.camera.updateProjectionMatrix();
+    skyThree.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    skyThree.renderer.setSize(bounds.width, bounds.height, false);
+    return true;
+  }
+
+  function drawSkyThree() {
+    if (!skyThree) return;
+    resizeSkyThree();
+    updateSkyCamera();
+    skyThree.renderer.render(skyThree.scene, skyThree.camera);
+  }
+
+  function bindSkyLookControls() {
+    if (!skyThree || skyThree.controlsBound || !skySphereHost) return;
+    skyThree.controlsBound = true;
+    var dragging = false;
+    var lastX = 0;
+    var lastY = 0;
+
+    skySphereHost.addEventListener('pointerdown', function (event) {
+      dragging = true;
+      lastX = event.clientX;
+      lastY = event.clientY;
+      skySphereHost.setPointerCapture?.(event.pointerId);
+    });
+    skySphereHost.addEventListener('pointermove', function (event) {
+      if (!dragging) return;
+      var dx = event.clientX - lastX;
+      var dy = event.clientY - lastY;
+      lastX = event.clientX;
+      lastY = event.clientY;
+      skyThree.look.yaw += dx * 0.004;
+      skyThree.look.pitch += dy * 0.004;
+      drawSkyThree();
+    });
+    skySphereHost.addEventListener('pointerup', function (event) {
+      dragging = false;
+      skySphereHost.releasePointerCapture?.(event.pointerId);
+    });
+    skySphereHost.addEventListener('pointercancel', function () {
+      dragging = false;
+    });
+    skySphereHost.addEventListener('wheel', function (event) {
+      event.preventDefault();
+      skyThree.look.fov = Math.max(35, Math.min(90, skyThree.look.fov + Math.sign(event.deltaY) * 4));
+      drawSkyThree();
+    }, { passive: false });
+  }
+
+  function initSkyThree() {
+    if (skyThree || !skySphereHost || !THREE) return skyThree;
+    var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
+    renderer.setClearColor(0x050812, 1);
+    renderer.domElement.setAttribute('aria-hidden', 'true');
+    skySphereHost.appendChild(renderer.domElement);
+
+    var scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x07142d);
+
+    var camera = new THREE.PerspectiveCamera(70, 1, 0.01, 180);
+    camera.up.set(0, 1, 0);
+
+    skyThree = {
+      camera: camera,
+      controlsBound: false,
+      layers: {},
+      look: { yaw: Math.PI, pitch: 25 * DEG2RAD, fov: 70 },
+      renderer: renderer,
+      scene: scene,
+      shellRadius: 96,
+    };
+    bindSkyLookControls();
+    resizeSkyThree();
+    updateSkyCamera();
+    return skyThree;
+  }
+
+  function renderSkyDome() {
+    if (!skyViewState || !initSkyThree()) return;
+    ['stars', 'grid', 'horizon', 'threshold', 'trajectory', 'labels'].forEach(clearSkyLayer);
+
+    var radius = skyThree.shellRadius;
+    skyThree.layers.stars = buildThreeStarsLayer(radius);
+    skyThree.layers.grid = buildThreeGridLayer(radius);
+    skyThree.layers.horizon = createSkyRing(0, radius, 0xffc482, 0.9, false);
+    skyThree.layers.threshold = buildThreeThresholdLayer(skyViewState.thresholdDeg, radius, skyViewState.options.showLabels);
+    skyThree.layers.trajectory = buildThreeTrajectoryLayer(skyViewState, radius);
+    skyThree.layers.labels = buildThreeLabelsLayer(radius);
+
+    Object.keys(skyThree.layers).forEach(function (name) {
+      if (skyThree.layers[name]) skyThree.scene.add(skyThree.layers[name]);
+    });
+
+    skyThree.layers.stars.visible = skyViewState.options.showStars;
+    skyThree.layers.grid.visible = skyViewState.options.showGrid;
+    skyThree.layers.horizon.visible = skyViewState.options.showHorizon;
+    skyThree.layers.threshold.visible = skyViewState.options.showThreshold;
+    skyThree.layers.labels.visible = skyViewState.options.showLabels;
+    skySphereFallback?.classList.add('hidden');
+    drawSkyThree();
+    window.requestAnimationFrame(drawSkyThree);
+    window.setTimeout(drawSkyThree, 120);
+  }
+
+  /* ═══════════════ SKY PLOT ═══════════════ */
+
+  // Populate body / star dropdowns
+  var bodies = siderust.listBodies();
+  var stars  = siderust.listCatalogStars();
+  var bodySelect = document.getElementById('sky-body');
+  var starSelect = document.getElementById('sky-star');
+  var posBodySelect = document.getElementById('pos-body');
+
+  bodies.forEach(function (b) {
+    bodySelect.appendChild(new Option(b, b));
+    posBodySelect.appendChild(new Option(b, b));
+  });
+  // Default to Sun
+  bodySelect.value = 'Sun';
+
+  stars.forEach(function (s) {
+    starSelect.appendChild(new Option(s, s));
+  });
+
+  // Set default date to today
+  var today = new Date();
+  var yyyy = today.getFullYear();
+  var mm = String(today.getMonth() + 1).padStart(2, '0');
+  var dd = String(today.getDate()).padStart(2, '0');
+  document.getElementById('sky-date').value = yyyy + '-' + mm + '-' + dd;
+
+  // Default period dates
+  var tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  function toLocalIso(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + 'T' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+  }
+  document.getElementById('time-utc').value = toLocalIso(today);
+  document.getElementById('period-start').value = toLocalIso(today);
+  document.getElementById('period-end').value = toLocalIso(tomorrow);
+  var nextWeek = new Date(today);
+  nextWeek.setDate(nextWeek.getDate() + 5);
+  document.getElementById('period-b-start').value = toLocalIso(tomorrow);
+  document.getElementById('period-b-end').value = toLocalIso(nextWeek);
+
+  var skyPlotTimer = null;
+  function runSkyPlotCompute() {
+    try {
+      computeSkyPlot();
+    } catch (err) {
+      console.error('Sky plot error', err);
+    }
+  }
+  function scheduleSkyPlotCompute(delayMs) {
+    if (skyPlotTimer !== null) clearTimeout(skyPlotTimer);
+    skyPlotTimer = setTimeout(function () {
+      skyPlotTimer = null;
+      runSkyPlotCompute();
+    }, delayMs);
+  }
+
+  // Toggle observer preset / custom
+  document.getElementById('sky-obs-preset').addEventListener('change', function () {
+    document.getElementById('sky-obs-custom').classList.toggle('hidden', this.value !== 'custom');
+    scheduleSkyPlotCompute(0);
+  });
+
+  // Toggle target type
+  document.getElementById('sky-target-type').addEventListener('change', function () {
+    document.getElementById('sky-target-body-wrap').classList.toggle('hidden', this.value !== 'body');
+    document.getElementById('sky-target-star-wrap').classList.toggle('hidden', this.value !== 'star');
+    document.getElementById('sky-target-custom-wrap').classList.toggle('hidden', this.value !== 'custom');
+    scheduleSkyPlotCompute(0);
+  });
+
+  [
+    'sky-date',
+    'sky-horizon',
+    'sky-body',
+    'sky-star',
+    'sky-obs-lon',
+    'sky-obs-lat',
+    'sky-obs-h',
+    'sky-custom-name',
+    'sky-custom-ra',
+    'sky-custom-dec',
+  ].forEach(function (id) {
+    var el = document.getElementById(id);
+    el?.addEventListener('input', function () {
+      scheduleSkyPlotCompute(150);
+    });
+    el?.addEventListener('change', function () {
+      scheduleSkyPlotCompute(0);
+    });
+  });
+
+  [
+    'sky-body',
+    'sky-star',
+  ].forEach(function (id) {
+    var el = document.getElementById(id);
+    el?.addEventListener('change', function () {
+      scheduleSkyPlotCompute(0);
+    });
+  });
+
+  SKY_TOGGLE_IDS.forEach(function (id) {
+    document.getElementById(id)?.addEventListener('change', function () {
+      if (!skyViewState) return;
+      skyViewState.options = getSkyLayerOptions();
+      renderSkyDome();
+    });
+  });
+
+  if (window.ResizeObserver && skySphereHost) {
+    var skyResizeObserver = new ResizeObserver(function () {
+      renderSkyDome();
+    });
+    skyResizeObserver.observe(skySphereHost);
+  }
+
+  function computeSkyPlot() {
+    // Build observer
+    var presetVal = document.getElementById('sky-obs-preset').value;
+    var observer;
+    if (presetVal === 'custom') {
+      var lon = parseFloat(document.getElementById('sky-obs-lon').value);
+      var lat = parseFloat(document.getElementById('sky-obs-lat').value);
+      var h   = parseFloat(document.getElementById('sky-obs-h').value);
+      observer = new siderust.Observer(DEG(lon), DEG(lat), M(h));
+    } else {
+      observer = makeObserver(presetVal);
+    }
+
+    // Build date window (24h from midnight UTC of selected date)
+    var dateStr = document.getElementById('sky-date').value;
+    var dateParts = dateStr.split('-');
+    var startDate = new Date(Date.UTC(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]), 0, 0, 0));
+    var endDate   = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+
+    var startMjd = tempoch.mjdFromDate(startDate);
+    var endMjd   = tempoch.mjdFromDate(endDate);
+    var window   = new tempoch.Period(startMjd, endMjd);
+    var threshold = DEG(parseFloat(document.getElementById('sky-horizon').value));
+    var thresholdDeg = threshold.to('Degree').value;
+    var thresholdLabel = thresholdDeg.toFixed(2) + '°';
+
+    // Determine target type and whether we use body or star APIs
+    var targetType = document.getElementById('sky-target-type').value;
+    var targetLabel, isBody, star;
+
+    if (targetType === 'body') {
+      targetLabel = document.getElementById('sky-body').value;
+      isBody = true;
+    } else if (targetType === 'star') {
+      var starName = document.getElementById('sky-star').value;
+      star = siderust.Star.catalog(starName);
+      targetLabel = starName;
+      isBody = false;
+    } else {
+      // Custom RA/Dec
+      var cName = document.getElementById('sky-custom-name').value || 'Custom';
+      var cRa   = parseFloat(document.getElementById('sky-custom-ra').value);
+      var cDec  = parseFloat(document.getElementById('sky-custom-dec').value);
+      star = new siderust.Star(
+        cName,
+        new qtty.Quantity(100, 'Parsec'),
+        new qtty.Quantity(1, 'SolarMass'),
+        new qtty.Quantity(1, 'NominalSolarRadius'),
+        new qtty.Quantity(1, 'SolarLuminosity'),
+        DEG(cRa),
+        DEG(cDec)
+      );
+      targetLabel = cName;
+      isBody = false;
+    }
+
+    // Compute altitude/azimuth samples (10-min cadence = 144 samples)
+    var cadenceMin = 10;
+    var nSamples = Math.floor(24 * 60 / cadenceMin) + 1;
+    var mjdStep = cadenceMin / (24 * 60);
+    var times = [], altitudes = [], azimuths = [];
+
+    for (var i = 0; i < nSamples; i++) {
+      var mjdVal = startMjd + i * mjdStep;
+      var mjd = new tempoch.ModifiedJulianDate(mjdVal);
+      var alt, az;
+      if (isBody) {
+        alt = siderust.bodyAltitudeAt(targetLabel, observer, mjd);
+        az  = siderust.bodyAzimuthAt(targetLabel, observer, mjd);
+      } else {
+        alt = siderust.starAltitudeAt(star, observer, mjd);
+        az  = siderust.starAzimuthAt(star, observer, mjd);
+      }
+      var t = tempoch.mjdToDate(mjdVal);
+      times.push(t);
+      altitudes.push(alt.to('Degree').value);
+      azimuths.push(az.to('Degree').value);
+    }
+
+    // Format times as HH:MM strings
+    var timeLabels = times.map(function (t) {
+      return String(t.getUTCHours()).padStart(2, '0') + ':' + String(t.getUTCMinutes()).padStart(2, '0');
+    });
+
+    // Horizon value
+    var horizonDeg = parseFloat(document.getElementById('sky-horizon').value);
+
+    // Hours-from-start array (used by both line charts and the 3D sphere).
+    var hoursOfDay = [];
+    for (var k = 0; k < azimuths.length; k++) {
+      hoursOfDay.push(k * cadenceMin / 60);
+    }
+
+    /**
+     * Build parallel x/y arrays with `null` gaps inserted wherever the
+     * value wraps past the edge of its valid range, so Plotly draws a
+     * discontinuity instead of a long line snapping back across the range.
+     *
+     * @param {Array} xs            Original x values (kept as-is).
+     * @param {number[]} ys         Original numeric y values.
+     * @param {number} halfRange    If |ys[i+1] - ys[i]| > halfRange, break.
+     * @param {number} [validMin]   If a sample is below this, break before it.
+     * @param {number} [validMax]   If a sample is above this, break before it.
+     * @returns {{x: Array, y: Array}}
+     */
+    function buildDiscontinuous(xs, ys, halfRange, validMin, validMax) {
+      var outX = [], outY = [];
+      for (var i = 0; i < ys.length; i++) {
+        var y = ys[i];
+        var outOfRange = (validMin !== undefined && y < validMin) ||
+                        (validMax !== undefined && y > validMax);
+        if (outOfRange) {
+          if (outX.length && outX[outX.length - 1] !== null) {
+            outX.push(null); outY.push(null);
+          }
+          continue;
+        }
+        if (outX.length) {
+          var prevY = outY[outY.length - 1];
+          if (prevY !== null && Math.abs(y - prevY) > halfRange) {
+            outX.push(null); outY.push(null);
+          }
+        }
+        outX.push(xs[i]); outY.push(y);
+      }
+      return { x: outX, y: outY };
+    }
+
+    // Normalise azimuth to [0, 360) so wrap detection is meaningful.
+    var azimuthsNorm = azimuths.map(function (a) {
+      return ((a % 360) + 360) % 360;
+    });
+
+    // ── Altitude chart ──
+    var altSeries = buildDiscontinuous(timeLabels, altitudes, 90, -90, 90);
+    var altTrace = {
+      type: 'scatter', mode: 'lines',
+      x: altSeries.x, y: altSeries.y,
+      line: { color: BRAND, width: 2.5 },
+      name: targetLabel,
+      hovertemplate: '<b>%{x} UTC</b><br>Alt: %{y:.2f}°<extra></extra>',
+      connectgaps: false,
+    };
+    var altLayout = Object.assign({}, baseLayout(), {
+      title: { text: targetLabel + ', ' + tr('altitudeChart', 'Altitude'), font: { size: 14 } },
+      xaxis: { title: { text: 'UTC', standoff: 8 }, gridcolor: grid(), tickangle: -45 },
+      yaxis: { title: { text: 'Altitude (°)', standoff: 8 }, gridcolor: grid(), range: [-90, 90] },
+      shapes: [
+        { type: 'line', x0: timeLabels[0], x1: timeLabels[timeLabels.length-1], y0: horizonDeg, y1: horizonDeg, line: { color: '#ef4444', dash: 'dash', width: 1.5 } },
+        { type: 'rect', x0: timeLabels[0], x1: timeLabels[timeLabels.length-1], y0: -90, y1: horizonDeg, fillcolor: 'rgba(239,68,68,0.05)', line: { width: 0 } },
+      ],
+      showlegend: false,
+    });
+    Plotly.newPlot('chart-altitude', [altTrace], altLayout, PCFG);
+
+    // ── Azimuth chart (line vs time, with wrap-aware discontinuity) ──
+    var azSeries = buildDiscontinuous(timeLabels, azimuthsNorm, 180, 0, 360);
+    var azTrace = {
+      type: 'scatter', mode: 'lines',
+      x: azSeries.x, y: azSeries.y,
+      line: { color: BLUE, width: 2.5 },
+      name: targetLabel,
+      hovertemplate: '<b>%{x} UTC</b><br>Az: %{y:.2f}°<extra></extra>',
+      connectgaps: false,
+    };
+    var azLayout = Object.assign({}, baseLayout(), {
+      title: { text: targetLabel + ', ' + tr('azimuthChart', 'Azimuth vs Local Time'), font: { size: 14 } },
+      xaxis: { title: { text: 'UTC', standoff: 8 }, gridcolor: grid(), tickangle: -45 },
+      yaxis: {
+        title: { text: 'Azimuth (°)', standoff: 8 },
+        gridcolor: grid(),
+        range: [0, 360],
+        tickmode: 'array',
+        tickvals: [0, 90, 180, 270, 360],
+        ticktext: ['N (0°)', 'E (90°)', 'S (180°)', 'W (270°)', 'N (360°)'],
+      },
+      showlegend: false,
+    });
+    Plotly.newPlot('chart-azimuth', [azTrace], azLayout, PCFG);
+
+    skyViewState = {
+      targetLabel: targetLabel,
+      altitudes: altitudes,
+      azimuths: azimuthsNorm,
+      hoursOfDay: hoursOfDay,
+      thresholdDeg: horizonDeg,
+      cadenceMinutes: cadenceMin,
+      options: getSkyLayerOptions(),
+    };
+    renderSkyDome();
+
+    // ── Events (crossings + culminations) ──
+    var crossings, culminations;
+    try {
+      if (isBody) {
+        crossings    = siderust.bodyCrossings(targetLabel, observer, window, threshold);
+        culminations = siderust.bodyCulminations(targetLabel, observer, window);
+      } else {
+        crossings    = siderust.starCrossings(star, observer, window, threshold);
+        culminations = siderust.starCulminations(star, observer, window);
+      }
+    } catch (e) {
+      crossings = [];
+      culminations = [];
+    }
+
+    var eventsEl = document.getElementById('sky-events');
+    eventsEl.innerHTML = '';
+
+    if (crossings.length === 0 && culminations.length === 0) {
+      // Check if always above or always below
+      var midAlt = altitudes[Math.floor(altitudes.length / 2)];
+      var specialEl = document.getElementById('sky-special');
+      specialEl.classList.remove('hidden');
+      if (midAlt > horizonDeg) {
+        specialEl.innerHTML = '<div class="chip bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">✦ ' + tr('circumpolar', 'Circumpolar, always above the horizon') + '</div>';
+      } else {
+        specialEl.innerHTML = '<div class="chip bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">✦ ' + tr('neverRises', 'Never rises, always below the horizon') + '</div>';
+      }
+    } else {
+      document.getElementById('sky-special')?.classList.add('hidden');
+    }
+
+    var renderedEvents = [];
+    var seenEvents = new Set();
+    function azimuthAtEvent(mjd) {
+      try {
+        var az = isBody
+          ? siderust.bodyAzimuthAt(targetLabel, observer, mjd)
+          : siderust.starAzimuthAt(star, observer, mjd);
+        return az.to('Degree').value.toFixed(2) + '°';
+      } catch (e) {
+        return '-';
+      }
+    }
+
+    crossings.forEach(function (evt) {
+      var d = evt.mjd.toDate();
+      var eventKey = 'crossing:' + evt.direction + ':' + d.toISOString();
+      if (seenEvents.has(eventKey)) return;
+      seenEvents.add(eventKey);
+      var isRising = evt.direction === 'rising';
+      var label = Math.abs(thresholdDeg) < 1e-9
+        ? (isRising ? tr('rise', 'Rise') : tr('set', 'Set'))
+        : (isRising
+          ? tr('riseAtThreshold', 'Rise @ {threshold}', { threshold: thresholdLabel })
+          : tr('setAtThreshold', 'Set @ {threshold}', { threshold: thresholdLabel }));
+      var icon = isRising ? '↑' : '↓';
+      renderedEvents.push({
+        time: d.getTime(),
+        type: icon + ' ' + label,
+        timeLabel: formatUtcDateTimeCell(d),
+        altitudeLabel: thresholdLabel,
+        azimuthLabel: azimuthAtEvent(evt.mjd),
+      });
+    });
+
+    culminations.forEach(function (evt) {
+      var d = evt.mjd.toDate();
+      var eventKey = 'culmination:' + evt.kind + ':' + d.toISOString();
+      if (seenEvents.has(eventKey)) return;
+      seenEvents.add(eventKey);
+      var isUpper = evt.kind === 'max';
+      var label = isUpper ? tr('upperCulmination', 'Upper culmination') : tr('lowerCulmination', 'Lower culmination');
+      var altStr = evt.altitude.to('Degree').value.toFixed(2) + '°';
+      renderedEvents.push({
+        time: d.getTime(),
+        type: '◆ ' + label,
+        timeLabel: formatUtcDateTimeCell(d),
+        altitudeLabel: altStr,
+        azimuthLabel: azimuthAtEvent(evt.mjd),
+      });
+    });
+
+    renderedEvents.sort(function (a, b) {
+      return a.time - b.time;
+    });
+    if (renderedEvents.length > 0) {
+      eventsEl.innerHTML =
+        '<div class="events-table-wrap">' +
+          '<table class="events-table">' +
+            '<thead><tr>' +
+              '<th>' + tr('eventType', 'Event') + '</th>' +
+              '<th>' + tr('timeUtc', 'Time (UTC)') + '</th>' +
+              '<th>' + tr('altitude', 'Altitude') + '</th>' +
+              '<th>' + tr('azimuth', 'Azimuth') + '</th>' +
+            '</tr></thead>' +
+            '<tbody>' +
+              renderedEvents.map(function (event) {
+                return '<tr>' +
+                  '<td class="event-kind">' + event.type + '</td>' +
+                  '<td class="event-time"><span class="event-time-inner">' + event.timeLabel + '</span></td>' +
+                  '<td class="event-altitude">' + event.altitudeLabel + '</td>' +
+                  '<td class="event-altitude">' + event.azimuthLabel + '</td>' +
+                '</tr>';
+              }).join('') +
+            '</tbody>' +
+          '</table>' +
+        '</div>';
+    } else if (document.getElementById('sky-special')?.classList.contains('hidden')) {
+      eventsEl.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400">' + tr('noEvents', 'No events for this configuration.') + '</p>';
+    } else {
+      eventsEl.innerHTML = '';
+    }
+
+    // ── Moon phase context chip ──
+    var moonPhaseEl = document.getElementById('sky-moon-phase');
+    if (targetLabel === 'Moon' || targetLabel === 'Sun') {
+      try {
+        var midMjd = startMjd + 0.5;
+        var jdMid = tempoch.mjdToJd(midMjd);
+        var jdObj = new tempoch.JulianDate(jdMid);
+        var phase = siderust.moonPhase(jdObj);
+        moonPhaseEl.classList.remove('hidden');
+        moonPhaseEl.innerHTML = '<div class="flex flex-wrap gap-2 mt-2">' +
+          '<span class="chip bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">🌙 ' + tr('moonPhaseLabel', 'Moon phase') + ': ' + phase.label + '</span>' +
+          '<span class="chip bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">☀ ' + tr('illumination', 'Illumination') + ': ' + (phase.illuminatedFraction * 100).toFixed(1) + '%</span>' +
+          '</div>';
+      } catch (e) {
+        moonPhaseEl.classList.add('hidden');
+      }
+    } else {
+      moonPhaseEl.classList.add('hidden');
+    }
+  }
+
+  /* ─── Shareable URL: read & write Sky Plot params ─── */
+
+  function applySkyPlotParamsFromUrl() {
+    var params;
+    try {
+      params = new URL(window.location.href).searchParams;
+    } catch (_) { return; }
+    if (!params || params.toString() === '') return;
+
+    function setVal(id, val) {
+      var el = document.getElementById(id);
+      if (el && val !== null && val !== undefined && val !== '') el.value = val;
+    }
+    function setSelect(id, val, allowed) {
+      if (val === null || val === undefined || val === '') return false;
+      var el = document.getElementById(id);
+      if (!el) return false;
+      if (allowed && allowed.indexOf(val) === -1) return false;
+      // For body/star dropdowns, accept the option only if it exists.
+      if (!allowed) {
+        var has = false;
+        for (var i = 0; i < el.options.length; i++) {
+          if (el.options[i].value === val) { has = true; break; }
+        }
+        if (!has) return false;
+      }
+      el.value = val;
+      return true;
+    }
+
+    // Observer
+    var obs = params.get('obs');
+    var obsAllowed = ['roqueDeLasMuchachos', 'elParanal', 'maunaKea', 'laSilla', 'custom'];
+    if (setSelect('sky-obs-preset', obs, obsAllowed)) {
+      var customObs = document.getElementById('sky-obs-custom');
+      if (customObs) customObs.classList.toggle('hidden', obs !== 'custom');
+      if (obs === 'custom') {
+        setVal('sky-obs-lon', params.get('lon'));
+        setVal('sky-obs-lat', params.get('lat'));
+        setVal('sky-obs-h',   params.get('h'));
+      }
+    }
+
+    // Target
+    var target = params.get('target');
+    var targetAllowed = ['body', 'star', 'custom'];
+    if (setSelect('sky-target-type', target, targetAllowed)) {
+      document.getElementById('sky-target-body-wrap')?.classList.toggle('hidden', target !== 'body');
+      document.getElementById('sky-target-star-wrap')?.classList.toggle('hidden', target !== 'star');
+      document.getElementById('sky-target-custom-wrap')?.classList.toggle('hidden', target !== 'custom');
+      if (target === 'body') {
+        setSelect('sky-body', params.get('body'));
+      } else if (target === 'star') {
+        setSelect('sky-star', params.get('star'));
+      } else if (target === 'custom') {
+        setVal('sky-custom-name', params.get('name'));
+        setVal('sky-custom-ra',   params.get('ra'));
+        setVal('sky-custom-dec',  params.get('dec'));
+      }
+    }
+
+    // Date (YYYY-MM-DD)
+    var date = params.get('date');
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) setVal('sky-date', date);
+
+    // Horizon threshold
+    var horizon = params.get('horizon');
+    if (horizon !== null && horizon !== '' && !isNaN(parseFloat(horizon))) {
+      setVal('sky-horizon', horizon);
+    }
+  }
+
+  function buildShareUrl() {
+    var url = new URL(window.location.href);
+    var p = new URLSearchParams();
+
+    var obs = document.getElementById('sky-obs-preset').value;
+    p.set('obs', obs);
+    if (obs === 'custom') {
+      p.set('lon', document.getElementById('sky-obs-lon').value);
+      p.set('lat', document.getElementById('sky-obs-lat').value);
+      p.set('h',   document.getElementById('sky-obs-h').value);
+    }
+
+    var target = document.getElementById('sky-target-type').value;
+    p.set('target', target);
+    if (target === 'body') {
+      p.set('body', document.getElementById('sky-body').value);
+    } else if (target === 'star') {
+      p.set('star', document.getElementById('sky-star').value);
+    } else if (target === 'custom') {
+      p.set('name', document.getElementById('sky-custom-name').value);
+      p.set('ra',   document.getElementById('sky-custom-ra').value);
+      p.set('dec',  document.getElementById('sky-custom-dec').value);
+    }
+
+    p.set('date',    document.getElementById('sky-date').value);
+    p.set('horizon', document.getElementById('sky-horizon').value);
+
+    url.search = p.toString();
+    url.hash = '';
+    return url.toString();
+  }
+
+  function showShareStatus(text, isError) {
+    var el = document.getElementById('sky-share-status');
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove('hidden');
+    el.classList.toggle('text-red-500', !!isError);
+    el.classList.toggle('dark:text-red-400', !!isError);
+    el.classList.toggle('text-emerald-600', !isError);
+    el.classList.toggle('dark:text-emerald-400', !isError);
+    if (showShareStatus._t) clearTimeout(showShareStatus._t);
+    showShareStatus._t = setTimeout(function () {
+      el.classList.add('hidden');
+    }, 2200);
+  }
+
+  document.getElementById('sky-share-btn')?.addEventListener('click', async function () {
+    var shareUrl = buildShareUrl();
+    var copiedMsg = tr('linkCopied', 'Link copied!');
+    var failMsg   = tr('linkCopyFailed', 'Could not copy. Select and copy manually.');
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        showShareStatus(copiedMsg, false);
+        return;
+      }
+      throw new Error('clipboard unavailable');
+    } catch (_) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = shareUrl;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = document.execCommand && document.execCommand('copy');
+        document.body.removeChild(ta);
+        showShareStatus(ok ? copiedMsg : failMsg, !ok);
+      } catch (_e) {
+        showShareStatus(failMsg, true);
+      }
+    }
+  });
+
+  // Apply any URL-shared parameters before the first compute.
+  applySkyPlotParamsFromUrl();
+
+  // Auto-compute on load
+  runSkyPlotCompute();
+
+
+  /* ═══════════════ COORDINATE PLAYGROUND ═══════════════ */
+
+  function computeDir() {
+    try {
+      var from    = document.getElementById('dir-from').value;
+      var to      = document.getElementById('dir-to').value;
+      var polar   = parseFloat(document.getElementById('dir-polar').value);
+      var azimuth = parseFloat(document.getElementById('dir-azimuth').value);
+      var epoch   = parseFloat(document.getElementById('dir-epoch').value);
+      var jd = new tempoch.JulianDate(epoch);
+
+      var result = siderust.transformDirection(DEG(polar), DEG(azimuth), from, to, jd);
+      var cart = siderust.directionToCartesian(result.polar, result.azimuth);
+
+      var el = document.getElementById('dir-result');
+      el.classList.remove('hidden');
+      el.innerHTML =
+        '<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">' + result.frame + '</p>' +
+        '<p><span class="text-gray-500">polar:</span> ' + result.polar.to('Degree').value.toFixed(6) + '°</p>' +
+        '<p><span class="text-gray-500">azimuth:</span> ' + result.azimuth.to('Degree').value.toFixed(6) + '°</p>' +
+        '<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Cartesian (unit)</p>' +
+        '<p><span class="text-gray-500">x:</span> ' + cart.x.toFixed(10) + '</p>' +
+        '<p><span class="text-gray-500">y:</span> ' + cart.y.toFixed(10) + '</p>' +
+        '<p><span class="text-gray-500">z:</span> ' + cart.z.toFixed(10) + '</p>';
+    } catch (err) {
+      console.error('Direction transform error', err);
+      var el = document.getElementById('dir-result');
+      el.classList.remove('hidden');
+      el.innerHTML = '<p class="text-red-500">Error: ' + err.message + '</p>';
+    }
+  }
+
+  function computeHor() {
+    try {
+      var frame   = document.getElementById('hor-frame').value;
+      var polar   = parseFloat(document.getElementById('hor-polar').value);
+      var azimuth = parseFloat(document.getElementById('hor-azimuth').value);
+      var epoch   = parseFloat(document.getElementById('hor-epoch').value);
+      var preset  = document.getElementById('hor-obs-preset').value;
+
+      var observer = makeObserver(preset);
+      var jd = new tempoch.JulianDate(epoch);
+      var result = siderust.directionToHorizontal(DEG(polar), DEG(azimuth), frame, jd, observer);
+
+      var el = document.getElementById('hor-result');
+      el.classList.remove('hidden');
+      el.innerHTML =
+        '<p><span class="text-gray-500">' + (LOCALE === 'ca' ? 'Altitud' : 'Altitude') + ':</span> ' + result.polar.to('Degree').value.toFixed(6) + '°</p>' +
+        '<p><span class="text-gray-500">' + (LOCALE === 'ca' ? 'Azimut' : 'Azimuth') + ':</span> ' + result.azimuth.to('Degree').value.toFixed(6) + '°</p>';
+    } catch (err) {
+      console.error('Horizontal transform error', err);
+      var el = document.getElementById('hor-result');
+      el.classList.remove('hidden');
+      el.innerHTML = '<p class="text-red-500">Error: ' + err.message + '</p>';
+    }
+  }
+
+  function computePos() {
+    try {
+      var body      = document.getElementById('pos-body').value;
+      var epoch     = parseFloat(document.getElementById('pos-epoch').value);
+      var dstCenter = document.getElementById('pos-center').value;
+      var dstFrame  = document.getElementById('pos-frame').value;
+
+      var jd = new tempoch.JulianDate(epoch);
+
+      var pos, curCenter;
+      if (body === 'Sun') {
+        pos = siderust.vsop87SunBarycentric(jd);
+        curCenter = 'Barycentric';
+      } else if (body === 'Moon') {
+        pos = siderust.vsop87MoonGeocentric(jd);
+        curCenter = 'Geocentric';
+      } else {
+        pos = siderust.vsop87Heliocentric(body, jd);
+        curCenter = 'Heliocentric';
+      }
+
+      var x = pos.x.to('AstronomicalUnit').value;
+      var y = pos.y.to('AstronomicalUnit').value;
+      var z = pos.z.to('AstronomicalUnit').value;
+      var curFrame = pos.frame;
+
+      if (dstCenter !== curCenter) {
+        var cResult = siderust.transformPositionCenter(AU(x), AU(y), AU(z), curCenter, dstCenter, jd);
+        x = cResult.x.to('AstronomicalUnit').value;
+        y = cResult.y.to('AstronomicalUnit').value;
+        z = cResult.z.to('AstronomicalUnit').value;
+        curCenter = cResult.center;
+        curFrame  = cResult.frame;
+      }
+
+      if (dstFrame !== curFrame) {
+        var fResult = siderust.transformPositionFrame(AU(x), AU(y), AU(z), curFrame, dstFrame, jd);
+        x = fResult.x.to('AstronomicalUnit').value;
+        y = fResult.y.to('AstronomicalUnit').value;
+        z = fResult.z.to('AstronomicalUnit').value;
+        curFrame = fResult.frame;
+      }
+
+      var el = document.getElementById('pos-result');
+      el.classList.remove('hidden');
+      el.innerHTML =
+        '<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">' + curFrame + ' / ' + curCenter + '</p>' +
+        '<p><span class="text-gray-500">x:</span> ' + x.toFixed(10) + ' AU</p>' +
+        '<p><span class="text-gray-500">y:</span> ' + y.toFixed(10) + ' AU</p>' +
+        '<p><span class="text-gray-500">z:</span> ' + z.toFixed(10) + ' AU</p>';
+    } catch (err) {
+      console.error('Position transform error', err);
+      var el = document.getElementById('pos-result');
+      el.classList.remove('hidden');
+      el.innerHTML = '<p class="text-red-500">Error: ' + err.message + '</p>';
+    }
+  }
+
+  // Wire live listeners for all three transforms
+  function bindLive(ids, fn) {
+    ids.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input',  function () { fn(); });
+      el.addEventListener('change', function () { fn(); });
+    });
+  }
+  bindLive(['dir-from', 'dir-to', 'dir-polar', 'dir-azimuth', 'dir-epoch'], computeDir);
+  bindLive(['hor-frame', 'hor-polar', 'hor-azimuth', 'hor-epoch', 'hor-obs-preset'], computeHor);
+  bindLive(['pos-body', 'pos-epoch', 'pos-center', 'pos-frame'], computePos);
+
+  // Compute immediately on load
+  computeDir();
+  computeHor();
+  computePos();
+
+
+  /* ═══════════════ TIME LAB ═══════════════ */
+
+  // UTC → JD/MJD converter
+  document.getElementById('time-convert').addEventListener('click', function () {
+    try {
+      var utcStr = document.getElementById('time-utc').value;
+      var date = new Date(utcStr + 'Z');
+
+      var jd = tempoch.JulianDate.fromDate(date);
+      var mjd = jd.toMjd();
+
+      document.getElementById('time-jd').textContent  = jd.value.toFixed(8);
+      document.getElementById('time-mjd').textContent = mjd.value.toFixed(8);
+      document.getElementById('time-jc').textContent  = jd.julianCenturies().value.toFixed(10);
+      document.getElementById('time-jy').textContent  = jd.julianYears().value.toFixed(10);
+
+      // Round-trip
+      var roundTrip = jd.toDate();
+      document.getElementById('time-roundtrip').textContent = roundTrip.toISOString();
+
+      document.getElementById('time-result').classList.remove('hidden');
+    } catch (err) {
+      console.error('Time conversion error', err);
+    }
+  });
+
+  // Period creation
+  document.getElementById('period-create').addEventListener('click', function () {
+    try {
+      var startStr = document.getElementById('period-start').value;
+      var endStr   = document.getElementById('period-end').value;
+      var startD = new Date(startStr + 'Z');
+      var endD   = new Date(endStr + 'Z');
+
+      var period = tempoch.Period.fromDates(startD, endD);
+      var durDays = period.durationDays();
+      var durHours = durDays * 24;
+
+      document.getElementById('period-duration').textContent =
+        durDays.toFixed(4) + (LOCALE === 'ca' ? ' dies' : ' days') + ' (' + durHours.toFixed(2) + (LOCALE === 'ca' ? ' hores' : ' hours') + ')';
+      document.getElementById('period-mjd-range').textContent =
+        period.startMjd.toFixed(6) + ' → ' + period.endMjd.toFixed(6);
+      var utcBounds = period.toUtc();
+      document.getElementById('period-utc-roundtrip').textContent =
+        new Date(utcBounds.startMs).toISOString() + ' → ' + new Date(utcBounds.endMs).toISOString();
+
+      document.getElementById('period-result').classList.remove('hidden');
+    } catch (err) {
+      console.error('Period creation error', err);
+    }
+  });
+
+  // Period intersection
+  document.getElementById('period-intersect').addEventListener('click', function () {
+    try {
+      var aStartStr = document.getElementById('period-start').value;
+      var aEndStr   = document.getElementById('period-end').value;
+      var bStartStr = document.getElementById('period-b-start').value;
+      var bEndStr   = document.getElementById('period-b-end').value;
+
+      var pA = tempoch.Period.fromDates(new Date(aStartStr + 'Z'), new Date(aEndStr + 'Z'));
+      var pB = tempoch.Period.fromDates(new Date(bStartStr + 'Z'), new Date(bEndStr + 'Z'));
+
+      var inter = pA.intersection(pB);
+      var resultEl = document.getElementById('period-intersection-result');
+      var textEl = document.getElementById('period-intersection-text');
+      resultEl.classList.remove('hidden');
+
+      if (inter) {
+        var utc = inter.toUtc();
+        textEl.textContent = new Date(utc.startMs).toISOString() + ' → ' + new Date(utc.endMs).toISOString() +
+          ' (' + inter.durationDays().toFixed(4) + (LOCALE === 'ca' ? ' dies' : ' days') + ')';
+      } else {
+        textEl.textContent = LOCALE === 'ca' ? 'Els períodes no se superposen.' : 'Periods do not overlap.';
+      }
+    } catch (err) {
+      console.error('Period intersection error', err);
+    }
+  });
+
+
+  /* ─── Dark mode resync for Plotly ─── */
+  function updatePlotlyTheme() {
+    dark = document.documentElement.classList.contains('dark');
+    try {
+      Plotly.relayout('chart-altitude', { 'font.color': fg(), 'xaxis.gridcolor': grid(), 'yaxis.gridcolor': grid() });
+    } catch (_) {}
+    try {
+      Plotly.relayout('chart-azimuth', { 'font.color': fg(), 'xaxis.gridcolor': grid(), 'yaxis.gridcolor': grid() });
+    } catch (_) {}
+    renderSkyDome();
+  }
+  var obs = new MutationObserver(updatePlotlyTheme);
+  obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+})();
+</script>

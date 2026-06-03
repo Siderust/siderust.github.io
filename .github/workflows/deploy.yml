@@ -1,0 +1,90 @@
+name: Deploy to GitHub Pages
+
+on:
+  # Trigger on pushes to main branch
+  push:
+    branches: [main]
+  # Allow manual trigger
+  workflow_dispatch:
+
+# Allow only one concurrent deployment
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+# Sets permissions of the GITHUB_TOKEN
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout required submodules
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git submodule sync --recursive -- lab products/siderust-cpp
+          git submodule update --init --recursive lab products/siderust-cpp
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Build WASM demo assets
+        run: npm run build:wasm-demo
+
+      - name: Install Doxygen and Graphviz
+        run: sudo apt-get install -y doxygen graphviz
+
+      - name: Generate Doxygen docs
+        run: bash scripts/generate_doxygen.sh
+
+      - name: Build site
+        run: npm run build
+        env:
+          # Optional: Add GitHub token for higher API rate limits
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy Doxygen docs into build output
+        run: |
+          for project in siderust-cpp qtty-cpp tempoch-cpp; do
+            src="doxygen/${project}/html"
+            if [ -d "$src" ]; then
+              mkdir -p "dist/doxygen/${project}/html"
+              cp -r "$src/." "dist/doxygen/${project}/html/"
+            fi
+          done
+
+      - name: Copy apt and rpm packages into build output
+        run: |
+          cp -r apt dist/apt
+          cp -r rpm dist/rpm
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,24 @@
+[submodule "products/rust/qtty"]
+	path = products/rust/qtty
+	url = git@github.com:Siderust/qtty.git
+[submodule "products/rust/cheby"]
+	path = products/rust/cheby
+	url = git@github.com:Siderust/cheby.git
+[submodule "products/rust/keplerian"]
+	path = products/rust/keplerian
+	url = git@github.com:Siderust/keplerian.git
+[submodule "products/rust/principia"]
+	path = products/rust/principia
+	url = git@github.com:Siderust/principia.git
+[submodule "products/rust/siderust"]
+	path = products/rust/siderust
+	url = git@github.com:Siderust/siderust.git
+[submodule "products/rust/optica"]
+	path = products/rust/optica
+	url = git@github.com:Siderust/optica.git
+[submodule "products/rust/archive"]
+	path = products/rust/archive
+	url = git@github.com:Siderust/archive.git
+[submodule "products/rust/tempoch"]
+	path = products/rust/tempoch
+	url = git@github.com:Siderust/tempoch.git

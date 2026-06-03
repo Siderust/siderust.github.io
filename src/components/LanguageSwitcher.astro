@@ -1,0 +1,58 @@
+---
+/**
+ * Language Switcher Component
+ *
+ * Displays toggle buttons for each locale. Persists preference to
+ * localStorage so the root redirect (`/`) can read it on return visits.
+ */
+import {
+  locales,
+  localeLabels,
+  localeNames,
+  switchLocalePath,
+  t,
+  type Locale,
+} from '../i18n/index';
+
+interface Props {
+  locale: Locale;
+  currentPath: string;
+}
+
+const { locale, currentPath } = Astro.props;
+---
+
+<div class="flex items-center gap-1 text-sm" role="group" aria-label={t(locale, 'lang.current', { lang: localeNames[locale] })}>
+  {locales.map((loc) => {
+    const isActive = loc === locale;
+    return (
+      <a
+        href={switchLocalePath(currentPath, loc)}
+        class:list={[
+          'px-2 py-1 rounded font-medium transition-colors',
+          isActive
+            ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 pointer-events-none'
+            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800',
+        ]}
+        aria-current={isActive ? 'true' : undefined}
+        aria-label={t(locale, 'lang.switchTo', { lang: localeNames[loc] })}
+        data-locale={loc}
+      >
+        {localeLabels[loc]}
+      </a>
+    );
+  })}
+</div>
+
+<script is:inline>
+  // Persist selected locale to localStorage for root-redirect preference
+  (function initLangSwitcher() {
+    document.querySelectorAll('[data-locale]').forEach(function (link) {
+      link.addEventListener('click', function () {
+        try {
+          localStorage.setItem('preferredLocale', link.dataset.locale);
+        } catch (_) {}
+      });
+    });
+  })();
+</script>

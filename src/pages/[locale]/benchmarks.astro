@@ -1,0 +1,788 @@
+---
+/**
+ * Localized benchmarks page (`/ca/benchmarks`, `/en/benchmarks`).
+ *
+ * Renders the latest published Lab run only — no historical runs, no comparison
+ * UI, no hash routes. Reads JSON artifacts from `lab/latest_results/` at
+ * build time and passes a sanitized chart payload to a small inline Plotly
+ * script for the two summary charts (accuracy p99 and ns/op).
+ */
+
+import Layout from '../../layouts/Layout.astro';
+import { getLocaleStaticPaths, t, type Locale } from '../../i18n/index';
+import { loadLabBundle } from '../../lib/lab/data';
+import {
+  fmtNumber, fmtNs, fmtDate,
+  isAccuracyChartable, isPerfChartable, colorFor,
+} from '../../lib/lab/format';
+import type { ScorecardExperiment, ScorecardRow } from '../../lib/lab/types';
+
+export function getStaticPaths() {
+  return getLocaleStaticPaths();
+}
+
+const locale = Astro.params.locale as Locale;
+const tt = (key: string, params?: Record<string, string | number>) => t(locale, `benchmarks.${key}`, params);
+
+const bundle = loadLabBundle();
+
+// Profile sources that are generic library names (not specific model identifiers)
+const GENERIC_MODEL_SOURCES = new Set(['SIDERUST', 'ASTROPY', 'LIBNOVA', 'ANISE', 'ERFA']);
+// Siderust variant profiles that are ephemeris-backend labels —
+// meaningless (and misleading) in rotation/transform-experiment context
+const EPHEM_BACKEND_PROFILES = new Set(['de440', 'elp2000']);
+
+interface ChartSeries { library: string; color: string; x: string[]; y: number[]; }
+interface ChartPayload {
+  accuracy: { series: ChartSeries[]; experiments: string[]; unit: string };
+  performance: { series: ChartSeries[]; experiments: string[] };
+}
+
+let chartPayload: ChartPayload = {
+  accuracy: { series: [], experiments: [], unit: '' },
+  performance: { series: [], experiments: [] },
+};
+
+if (bundle) {
+  const experiments: ScorecardExperiment[] = bundle.scorecard.families.flatMap(f => f.experiments);
+  const expIds = experiments.map(e => e.experiment);
+
+  // Build accuracy series (rankable rows only; skip the reference itself)
+  const accSeriesByLib = new Map<string, ChartSeries>();
+  for (const exp of experiments) {
+    for (const row of exp.rows) {
+      if (row.library === exp.reference_library && (row.profile == null || row.profile === '')) continue;
+      if (!isAccuracyChartable(row)) continue;
+      if (EPHEM_BACKEND_PROFILES.has(row.profile ?? '')) continue;
+      const key = row.display_name || row.library;
+      if (!accSeriesByLib.has(key)) {
+        accSeriesByLib.set(key, { library: key, color: colorFor(row.library), x: [], y: [] });
+      }
+      const s = accSeriesByLib.get(key)!;
+      s.x.push(exp.experiment);
+      s.y.push(row.p99 as number);
+    }
+  }
+
+  // Build perf series (valid timing rows only)
+  const perfSeriesByLib = new Map<string, ChartSeries>();
+  for (const exp of experiments) {
+    for (const row of exp.rows) {
+      if (!isPerfChartable(row)) continue;
+      if (EPHEM_BACKEND_PROFILES.has(row.profile ?? '')) continue;
+      const key = row.display_name || row.library;
+      if (!perfSeriesByLib.has(key)) {
+        perfSeriesByLib.set(key, { library: key, color: colorFor(row.library), x: [], y: [] });
+      }
+      const s = perfSeriesByLib.get(key)!;
+      s.x.push(exp.experiment);
+      s.y.push(row.ns_per_op as number);
+    }
+  }
+
+  // Pick a representative metric unit (most common across experiments)
+  const unit = experiments[0]?.metric.unit ?? '';
+
+  chartPayload = {
+    accuracy: {
+      series: Array.from(accSeriesByLib.values()),
+      experiments: expIds,
+      unit,
+    },
+    performance: {
+      series: Array.from(perfSeriesByLib.values()),
+      experiments: expIds,
+    },
+  };
+}
+
+const familyTitles: Record<string, string> = {
+  frame_transformations: locale === 'ca' ? 'Transformacions de marc' : 'Frame transformations',
+  pointing: locale === 'ca' ? 'Apuntat' : 'Pointing',
+  time_earth_rotation: locale === 'ca' ? 'Temps i rotació terrestre' : 'Time & Earth rotation',
+  solar_system_ephemerides: locale === 'ca' ? 'Efemèrides del sistema solar' : 'Solar system ephemerides',
+  orbital_primitives: locale === 'ca' ? 'Primitius orbitals' : 'Orbital primitives',
+};
+
+// ─── Solar system ephemerides — matrix data ──────────────────────────────────
+
+const EPHEM_FAMILY = 'solar_system_ephemerides';
+
+// Model sources that are just the library name (not informative as a sub-label)
+const GENERIC_MATRIX_SOURCES = new Set(['SIDERUST', 'ASTROPY', 'LIBNOVA', 'ANISE', 'ERFA']);
+
+// Preferred profile order when picking the canonical row for a (library, model_source) group
+const CANONICAL_PROFILE_ORDER: (string | null)[] = [null, 'iau2006a', 'iau2000a', 'iau2000b'];
+
+// Default analytic Sun, planet, and Moon sources share a matrix display column.
+// erfa only covers Sun (EPV00) and Moon (Moon98) — no PLAN94 in current scorecard.
+// siderust analytic group covers Sun + Moon; SPK group (JPL DE440 / SIDERUST) covers all bodies.
+const DEFAULT_SOLAR_SYSTEM_COL_GROUPS = [
+  ['erfa|EPV00', 'erfa|Moon98'],
+  ['libnova|VSOP87', 'libnova|ELP2000-82B'],
+  ['siderust|VSOP87', 'siderust|Meeus Ch.47', 'siderust|ELP2000-82B'],
+  ['siderust|JPL DE440', 'siderust|SIDERUST'],
+] as const;
+const DEFAULT_SOLAR_SYSTEM_COL_KEYS = new Map<string, readonly string[]>(
+  DEFAULT_SOLAR_SYSTEM_COL_GROUPS.flatMap(colKeys => colKeys.map(colKey => [colKey, colKeys])),
+);
+
+interface EphCol {
+  library: string;
+  modelSources: string[];
+  colKeys: string[]; // `${library}|${modelSource}` keys in display order
+  label: string;   // library name
+  sublabel: string | null; // model_source when informative, otherwise null
+}
+
+interface EphRowStats {
+  mean: number | null; p50: number | null; p99: number | null;
+  max: number | null; rms: number | null;
+  ns_per_op: number | null; perf_cv_pct: number | null;
+  model_source: string | null;
+}
+
+interface EphBodyData {
+  body: string; bodyTitle: string;
+  acc: Record<string, number | null>;  // keyed by colKey
+  perf: Record<string, number | null>; // keyed by colKey
+  siderust: EphRowStats | null;
+  bestAccColKey: string | null;
+  bestPerfColKey: string | null;
+}
+
+interface EphDataGap {
+  bodyTitle: string;
+  candidate: string;
+  status: string;
+  reason: string;
+}
+
+interface EphemerisSection {
+  bodies: EphBodyData[];
+  columns: EphCol[];
+  dataGaps: EphDataGap[];
+  unit: string;
+}
+
+function ephemerisBodyTitle(experiment: string): { body: string; bodyTitle: string } {
+  const body = experiment.replace(/_position$/, '');
+  const bodyTitle =
+    body === 'lunar' ? 'Moon' :
+    body === 'solar' ? 'Sun' :
+    body.charAt(0).toUpperCase() + body.slice(1);
+  return { body, bodyTitle };
+}
+
+function ephemerisDisplayColumns(rawCols: EphCol[]): EphCol[] {
+  const rawColsByKey = new Map(rawCols.map(col => [col.colKeys[0], col]));
+  const usedColKeys = new Set<string>();
+  const displayCols: EphCol[] = [];
+
+  for (const col of rawCols) {
+    const colKey = col.colKeys[0];
+    if (usedColKeys.has(colKey)) continue;
+
+    const pairedColKeys = DEFAULT_SOLAR_SYSTEM_COL_KEYS.get(colKey);
+    const pairedCols = pairedColKeys
+      ?.map(key => rawColsByKey.get(key))
+      .filter((pairedCol): pairedCol is EphCol => pairedCol != null);
+
+    if (pairedColKeys && pairedCols && pairedCols.length === pairedColKeys.length) {
+      pairedColKeys.forEach(key => usedColKeys.add(key));
+      displayCols.push({
+        library: pairedCols[0].library,
+        modelSources: pairedCols.flatMap(pairedCol => pairedCol.modelSources),
+        colKeys: [...pairedColKeys],
+        label: pairedCols[0].label,
+        sublabel: pairedCols
+          .map(pairedCol => pairedCol.sublabel ?? pairedCol.modelSources.join(' / '))
+          .join(' / '),
+      });
+      continue;
+    }
+
+    usedColKeys.add(colKey);
+    displayCols.push(col);
+  }
+
+  return displayCols;
+}
+
+function ephemerisColumnValues(values: Record<string, number | null>, col: EphCol): number[] {
+  return col.colKeys
+    .map(colKey => values[colKey])
+    .filter((value): value is number => value != null);
+}
+
+const ephemerisSection: EphemerisSection | null = (() => {
+  if (!bundle) return null;
+  const fam = bundle.scorecard.families.find(f => f.family === EPHEM_FAMILY);
+  if (!fam) return null;
+
+  const unit = fam.experiments[0]?.metric.unit ?? 'arcsec';
+
+  // Pass 1: for every experiment, group rows by (library, model_source) and pick
+  // the canonical row (prefer null profile, then iau2006a, then first seen).
+  const colRegistry = new Map<string, EphCol>();
+  const expCanonical = new Map<string, Map<string, ScorecardRow>>();
+
+  for (const exp of fam.experiments) {
+    const groups = new Map<string, ScorecardRow[]>();
+    for (const row of exp.rows) {
+      if (!row.model_source) continue;
+      const ck = `${row.library}|${row.model_source}`;
+      if (!groups.has(ck)) groups.set(ck, []);
+      groups.get(ck)!.push(row);
+    }
+
+    const canonical = new Map<string, ScorecardRow>();
+    for (const [ck, rows] of groups) {
+      let best: ScorecardRow | undefined;
+      for (const pref of CANONICAL_PROFILE_ORDER) {
+        const match = rows.find(r => r.profile === pref);
+        if (match) { best = match; break; }
+      }
+      if (!best) best = rows[0];
+      canonical.set(ck, best!);
+
+      if (!colRegistry.has(ck)) {
+        const ms = best!.model_source!;
+        colRegistry.set(ck, {
+          library: best!.library,
+          modelSources: [ms],
+          colKeys: [ck],
+          label: best!.library,
+          sublabel: GENERIC_MATRIX_SOURCES.has(ms.toUpperCase()) ? null : ms,
+        });
+      }
+    }
+    expCanonical.set(exp.experiment, canonical);
+  }
+
+  // Sort: non-siderust libraries alphabetically first; siderust last (by model_source within siderust)
+  const allCols = Array.from(colRegistry.values()).sort((a, b) => {
+    if (a.library !== b.library) {
+      if (a.library === 'siderust') return 1;
+      if (b.library === 'siderust') return -1;
+      return a.library.localeCompare(b.library);
+    }
+    return a.modelSources[0].localeCompare(b.modelSources[0]);
+  });
+
+  // Pass 2: build per-body data
+  const bodies: EphBodyData[] = [];
+  for (const exp of fam.experiments) {
+    const { body: bodyId, bodyTitle } = ephemerisBodyTitle(exp.experiment);
+
+    const canonical = expCanonical.get(exp.experiment)!;
+    const acc: Record<string, number | null> = {};
+    const perf: Record<string, number | null> = {};
+
+    for (const col of allCols) {
+      const colKey = col.colKeys[0];
+      const row = canonical.get(colKey);
+      acc[colKey] = (row && row.status === 'ok') ? row.mean : null;
+      perf[colKey] = (row && row.status === 'ok' && row.perf_valid && row.ns_per_op != null)
+        ? row.ns_per_op : null;
+    }
+
+    // Siderust detail table: use the first canonical siderust row (covers the default model)
+    let siderust: EphRowStats | null = null;
+    for (const [, row] of canonical) {
+      if (row.library === 'siderust' && row.status === 'ok') {
+        siderust = { mean: row.mean, p50: row.p50, p99: row.p99, max: row.max, rms: row.rms,
+                     ns_per_op: row.ns_per_op, perf_cv_pct: row.perf_cv_pct,
+                     model_source: row.model_source ?? null };
+        break;
+      }
+    }
+
+    let bestAccColKey: string | null = null, bestAccVal = Infinity;
+    let bestPerfColKey: string | null = null, bestPerfVal = Infinity;
+    for (const col of allCols) {
+      const colKey = col.colKeys[0];
+      const av = acc[colKey];
+      if (av != null && av < bestAccVal) { bestAccVal = av; bestAccColKey = colKey; }
+      const pv = perf[colKey];
+      if (pv != null && pv < bestPerfVal) { bestPerfVal = pv; bestPerfColKey = colKey; }
+    }
+
+    bodies.push({ body: bodyId, bodyTitle, acc, perf, siderust, bestAccColKey, bestPerfColKey });
+  }
+
+  // Drop columns where every body has null in both acc and perf (e.g., skipped ANISE)
+  const columns = ephemerisDisplayColumns(allCols).filter(col =>
+    bodies.some(bd => col.colKeys.some(colKey => bd.acc[colKey] != null || bd.perf[colKey] != null))
+  );
+
+  const dataGaps = fam.experiments.flatMap(exp => {
+    const { bodyTitle } = ephemerisBodyTitle(exp.experiment);
+    return exp.rows
+      .filter(row => row.status === 'skipped' || row.status === 'failed')
+      .map(row => ({
+        bodyTitle,
+        candidate: row.display_name || row.library,
+        status: row.status,
+        reason: row.skip_reason || row.failure_reason || row.rank_exclusion_reason || row.status,
+      }));
+  });
+
+  return { bodies, columns, dataGaps, unit };
+})();
+---
+
+<Layout
+  locale={locale}
+  title={tt('title')}
+  description={tt('seoDescription')}
+>
+  {!bundle && (
+    <section class="py-20 md:py-28 bg-white dark:bg-gray-950">
+      <div class="container-custom max-w-3xl">
+        <h1 class="section-heading">{tt('fallbackTitle')}</h1>
+        <p class="mt-4 text-gray-600 dark:text-gray-400" set:html={tt('fallbackDesc')} />
+      </div>
+    </section>
+  )}
+
+  {bundle && (
+    <>
+      <!-- ───────────── Hero ───────────── -->
+      <section class="py-12 md:py-16 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+        <div class="container-custom">
+          <div class="max-w-3xl">
+            <div class="flex flex-wrap items-center gap-3 mb-5">
+              <span class="badge bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{tt('heroBadge')}</span>
+              <span class="text-sm text-gray-500 dark:text-gray-500">{fmtDate(bundle.manifest.metadata.date, locale === 'ca' ? 'ca-ES' : 'en-US')}</span>
+            </div>
+            <h1 class="section-heading">{tt('heroTitle')}</h1>
+            <p class="section-subheading">{tt('heroSubtitle')}</p>
+            <dl class="mt-6 grid sm:grid-cols-2 gap-3 text-sm">
+              <div class="flex gap-2">
+                <dt class="text-gray-500 dark:text-gray-400">{tt('machineLabel')}:</dt>
+                <dd class="text-gray-700 dark:text-gray-300 font-mono">{bundle.scorecard.machine}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="text-gray-500 dark:text-gray-400">{tt('runIdLabel')}:</dt>
+                <dd class="text-gray-700 dark:text-gray-300 font-mono">{bundle.manifest.run_id}</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────── Summary ───────────── -->
+      <section class="py-10 md:py-14 bg-white dark:bg-gray-950">
+        <div class="container-custom">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{tt('summaryTitle')}</h2>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: tt('summaryFamilies'), value: bundle.scorecard.families.length },
+              { label: tt('summaryExperiments'), value: bundle.scorecard.families.reduce((n, f) => n + f.experiments.length, 0) },
+              { label: tt('summaryReferences'), value: bundle.scorecard.references.length },
+              { label: tt('summaryInputs'), value: bundle.manifest.config.n.toLocaleString('en-US') },
+              { label: tt('summarySeed'), value: bundle.manifest.config.seed },
+              { label: tt('summaryPerfRounds'), value: bundle.manifest.config.perf_rounds },
+              { label: tt('summaryCompleteness'), value: `${bundle.manifest.completeness.completed}/${bundle.manifest.completeness.requested}` },
+              { label: tt('summaryCpu'), value: bundle.manifest.metadata.cpu_model },
+            ].map(item => (
+              <div class="card p-4">
+                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{item.label}</p>
+                <p class="mt-1 text-base font-semibold text-gray-900 dark:text-white break-words">{item.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────── Charts ───────────── -->
+      <section class="py-10 md:py-14 bg-gray-50 dark:bg-gray-900/50">
+        <div class="container-custom">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{tt('chartsTitle')}</h2>
+
+          <div class="space-y-8">
+            <div class="card p-4 md:p-6">
+              <div class="mb-3 flex items-start justify-between gap-3">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white">{tt('accuracyChartTitle')}</h3>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{tt('accuracyChartHelp')}</p>
+              <div id="lab-acc-chart" class="w-full" style="height:420px;">
+                <div class="flex items-center justify-center h-full text-gray-400 text-sm">{t(locale, 'common.loading')}</div>
+              </div>
+            </div>
+
+            <div class="card p-4 md:p-6">
+              <div class="mb-3 flex items-start justify-between gap-3">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white">{tt('perfChartTitle')}</h3>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{tt('perfChartHelp')}</p>
+              <div id="lab-perf-chart" class="w-full" style="height:420px;">
+                <div class="flex items-center justify-center h-full text-gray-400 text-sm">{t(locale, 'common.loading')}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────── Families ───────────── -->
+      <section class="py-10 md:py-14 bg-white dark:bg-gray-950">
+        <div class="container-custom">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{tt('familiesTitle')}</h2>
+
+          <div class="space-y-12">
+            {bundle.scorecard.families.map(family => (
+              <div>
+                <div class="mb-4 flex items-baseline justify-between gap-3">
+                  <h3 class="text-xl font-bold text-gray-900 dark:text-white">{familyTitles[family.family] ?? family.family}</h3>
+                  <span class="text-sm text-gray-500 dark:text-gray-400">{family.experiments.length} {tt('familyExperimentsLabel')}</span>
+                </div>
+
+                {family.family === EPHEM_FAMILY && ephemerisSection ? (
+                  /* ── 3 ephemeris matrix tables ── */
+                  <div class="space-y-8">
+
+                    {/* ── Data gaps for this run ── */}
+                    {ephemerisSection.dataGaps.length > 0 && (
+                      <div class="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-700/50 p-4 text-sm">
+                        <p class="font-semibold text-amber-800 dark:text-amber-400 mb-1">{tt('ephDataWarningTitle')}</p>
+                        <p class="text-amber-700 dark:text-amber-300">{tt('ephDataWarning')}</p>
+                        <ul class="mt-3 space-y-1 text-xs text-amber-800 dark:text-amber-200">
+                          {ephemerisSection.dataGaps.map(gap => (
+                            <li>
+                              <span class="font-semibold">{gap.bodyTitle} / {gap.candidate}</span>
+                              <span class="uppercase text-[10px] ml-1">{gap.status}</span>
+                              <span class="ml-1">- {gap.reason}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Table A — Accuracy matrix */}
+                    <div class="card p-4 md:p-6">
+                      <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">{tt('ephAccMatrixTitle')}</h4>
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">{tt('ephAccMatrixCaption')}</p>
+                      <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                          <thead>
+                            <tr class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
+                              <th class="py-2 pr-4 font-medium">{tt('ephBodyLabel')}</th>
+                              {ephemerisSection.columns.map(col => (
+                                <th class="py-2 pr-3 font-medium text-right leading-tight">
+                                  {col.label}
+                                  <span class="block font-normal normal-case text-gray-400">
+                                    {col.sublabel ? `${col.sublabel} (${ephemerisSection.unit})` : `(${ephemerisSection.unit})`}
+                                  </span>
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ephemerisSection.bodies.map(bd => (
+                              <tr class="border-b border-gray-100 dark:border-gray-900">
+                                <td class="py-2 pr-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{bd.bodyTitle}</td>
+                                {ephemerisSection.columns.map(col => {
+                                  const values = ephemerisColumnValues(bd.acc, col);
+                                  const isBest = bd.bestAccColKey != null && col.colKeys.includes(bd.bestAccColKey);
+                                  return (
+                                    <td class={`py-2 pr-3 text-right tabular-nums whitespace-nowrap${isBest ? ' bg-green-50 dark:bg-green-900/10 font-semibold' : ''}`}>
+                                      {values.length > 0 ? values.map(v => fmtNumber(v)).join(' / ') : '—'}
+                                      {isBest && <span class="ml-1 text-xs text-green-700 dark:text-green-400">★</span>}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Table B — Performance matrix */}
+                    <div class="card p-4 md:p-6">
+                      <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">{tt('ephPerfMatrixTitle')}</h4>
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">{tt('ephPerfMatrixCaption')}</p>
+                      <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                          <thead>
+                            <tr class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
+                              <th class="py-2 pr-4 font-medium">{tt('ephBodyLabel')}</th>
+                              {ephemerisSection.columns.map(col => (
+                                <th class="py-2 pr-3 font-medium text-right leading-tight">
+                                  {col.label}
+                                  <span class="block font-normal normal-case text-gray-400">
+                                    {col.sublabel ? `${col.sublabel} (ns/op)` : '(ns/op)'}
+                                  </span>
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ephemerisSection.bodies.map(bd => (
+                              <tr class="border-b border-gray-100 dark:border-gray-900">
+                                <td class="py-2 pr-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{bd.bodyTitle}</td>
+                                {ephemerisSection.columns.map(col => {
+                                  const values = ephemerisColumnValues(bd.perf, col);
+                                  const isBest = bd.bestPerfColKey != null && col.colKeys.includes(bd.bestPerfColKey);
+                                  return (
+                                    <td class={`py-2 pr-3 text-right tabular-nums whitespace-nowrap${isBest ? ' bg-blue-50 dark:bg-blue-900/10 font-semibold' : ''}`}>
+                                      {values.length > 0 ? values.map(v => fmtNs(v)).join(' / ') : '—'}
+                                      {isBest && <span class="ml-1 text-xs text-blue-700 dark:text-blue-400">⚡</span>}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Table C — Siderust detail */}
+                    <div class="card p-4 md:p-6">
+                      <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">{tt('ephSiderustTitle')}</h4>
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">{tt('ephSiderustCaption')}</p>
+                      <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                          <thead>
+                            <tr class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
+                              <th class="py-2 pr-4 font-medium">{tt('ephBodyLabel')}</th>
+                              <th class="py-2 pr-3 font-medium">{tt('tableModel')}</th>
+                              <th class="py-2 pr-3 font-medium text-right">{tt('tableP50')} <span class="font-normal normal-case text-gray-400">({ephemerisSection.unit})</span></th>
+                              <th class="py-2 pr-3 font-medium text-right">{tt('tableP99')} <span class="font-normal normal-case text-gray-400">({ephemerisSection.unit})</span></th>
+                              <th class="py-2 pr-3 font-medium text-right">{tt('tableMax')} <span class="font-normal normal-case text-gray-400">({ephemerisSection.unit})</span></th>
+                              <th class="py-2 pr-3 font-medium text-right">{t(locale, 'benchmarks.ephMeanAcc', { unit: ephemerisSection.unit })}</th>
+                              <th class="py-2 pr-3 font-medium text-right">RMS <span class="font-normal normal-case text-gray-400">({ephemerisSection.unit})</span></th>
+                              <th class="py-2 pr-3 font-medium text-right">{tt('tableNsPerOp')}</th>
+                              <th class="py-2 pl-3 font-medium text-right">{tt('ephCv')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ephemerisSection.bodies.map(bd => {
+                              const s = bd.siderust;
+                              return (
+                                <tr class="border-b border-gray-100 dark:border-gray-900">
+                                  <td class="py-2 pr-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{bd.bodyTitle}</td>
+                                  <td class="py-2 pr-3 text-gray-500 dark:text-gray-400 whitespace-nowrap font-mono text-xs">{s?.model_source ?? '—'}</td>
+                                  <td class="py-2 pr-3 text-right tabular-nums">{s ? fmtNumber(s.p50) : '—'}</td>
+                                  <td class="py-2 pr-3 text-right tabular-nums">{s ? fmtNumber(s.p99) : '—'}</td>
+                                  <td class="py-2 pr-3 text-right tabular-nums">{s ? fmtNumber(s.max) : '—'}</td>
+                                  <td class="py-2 pr-3 text-right tabular-nums">{s ? fmtNumber(s.mean) : '—'}</td>
+                                  <td class="py-2 pr-3 text-right tabular-nums">{s ? fmtNumber(s.rms) : '—'}</td>
+                                  <td class="py-2 pr-3 text-right tabular-nums">{s ? fmtNs(s.ns_per_op) : '—'}</td>
+                                  <td class="py-2 pl-3 text-right tabular-nums">{s?.perf_cv_pct != null ? `${s.perf_cv_pct.toFixed(1)}%` : '—'}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                  </div>
+                ) : (
+                  <div class="space-y-6">
+                    {family.experiments.map(exp => {
+                      const detail = bundle.experiments[exp.experiment];
+                      // pick description from first row that has one
+                      const desc = detail?.rows?.find(r => r.description)?.description;
+
+                      return (
+                        <div class="card p-4 md:p-6">
+                          <header class="mb-4">
+                            <div class="flex flex-wrap items-baseline gap-3">
+                              <h4 class="text-lg font-semibold text-gray-900 dark:text-white">{exp.title}</h4>
+                              <code class="text-xs text-gray-500 dark:text-gray-500">{exp.experiment}</code>
+                            </div>
+                            <dl class="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
+                              <div><dt class="inline text-gray-500 dark:text-gray-500">{tt('experimentReference')}:</dt> <dd class="inline font-medium">{exp.reference_library}{exp.reference_model ? ` — ${exp.reference_model}` : ''}</dd></div>
+                              <div><dt class="inline text-gray-500 dark:text-gray-500">{tt('experimentMetric')}:</dt> <dd class="inline font-medium">{exp.metric.label} ({exp.metric.unit})</dd></div>
+                              <div><dt class="inline text-gray-500 dark:text-gray-500">{tt('experimentTier')}:</dt> <dd class="inline font-medium">{exp.tier}</dd></div>
+                              {exp.best_accuracy && <div><dt class="inline text-gray-500 dark:text-gray-500">{tt('experimentBestAcc')}:</dt> <dd class="inline font-medium">{exp.best_accuracy}</dd></div>}
+                              {exp.best_performance && <div><dt class="inline text-gray-500 dark:text-gray-500">{tt('experimentBestPerf')}:</dt> <dd class="inline font-medium">{exp.best_performance}</dd></div>}
+                            </dl>
+                          </header>
+
+                          <div class="overflow-x-auto">
+                            <table class="min-w-full text-sm">
+                              <thead>
+                                <tr class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
+                                  <th class="py-2 pr-3 font-medium">{tt('tableCandidate')}</th>
+                                  <th class="py-2 pr-3 font-medium">{tt('tableProfile')}</th>
+                                  <th class="py-2 pr-3 font-medium text-right">{tt('tableP50')} <span class="font-normal normal-case text-gray-400">({exp.metric.unit})</span></th>
+                                  <th class="py-2 pr-3 font-medium text-right">{tt('tableP99')} <span class="font-normal normal-case text-gray-400">({exp.metric.unit})</span></th>
+                                  <th class="py-2 pr-3 font-medium text-right">{tt('tableMax')} <span class="font-normal normal-case text-gray-400">({exp.metric.unit})</span></th>
+                                  <th class="py-2 pr-3 font-medium text-right">{tt('tableMean')} <span class="font-normal normal-case text-gray-400">({exp.metric.unit})</span></th>
+                                  <th class="py-2 pr-3 font-medium text-right">{tt('tableRms')} <span class="font-normal normal-case text-gray-400">({exp.metric.unit})</span></th>
+                                  <th class="py-2 pr-3 font-medium text-right">{tt('tableNsPerOp')}</th>
+                                  <th class="py-2 pl-3 font-medium text-right">{tt('tableCv')}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {exp.rows.filter(row =>
+                                  !EPHEM_BACKEND_PROFILES.has(row.profile ?? '')
+                                ).map(row => {
+                                  const isBestAcc = row.display_name === exp.best_accuracy;
+                                  const isBestPerf = row.display_name === exp.best_performance;
+                                  const rowBg = isBestAcc && isBestPerf
+                                    ? 'bg-purple-50 dark:bg-purple-900/10'
+                                    : isBestAcc
+                                    ? 'bg-green-50 dark:bg-green-900/10'
+                                    : isBestPerf
+                                    ? 'bg-blue-50 dark:bg-blue-900/10'
+                                    : '';
+                                  const profile = row.status === 'ok'
+                                    ? (row.model_source && !GENERIC_MODEL_SOURCES.has(row.model_source)
+                                       ? row.model_source
+                                       : (row.profile ?? row.model_source ?? '—'))
+                                    : '—';
+                                  return (
+                                    <tr class={`border-b border-gray-100 dark:border-gray-900 align-top ${rowBg}`}>
+                                      <td class="py-2 pr-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                                        {row.display_name || row.library}
+                                        {isBestAcc && <span class="ml-1.5 text-xs text-green-700 dark:text-green-400" title={tt('bestAccLabel')}>★</span>}
+                                        {isBestPerf && <span class="ml-1 text-xs text-blue-700 dark:text-blue-400" title={tt('bestPerfLabel')}>⚡</span>}
+                                      </td>
+                                      <td class="py-2 pr-3 text-gray-600 dark:text-gray-400 whitespace-nowrap font-mono text-xs">{profile}</td>
+                                      <td class="py-2 pr-3 text-right tabular-nums">{fmtNumber(row.p50)}</td>
+                                      <td class="py-2 pr-3 text-right tabular-nums">{fmtNumber(row.p99)}</td>
+                                      <td class="py-2 pr-3 text-right tabular-nums">{fmtNumber(row.max)}</td>
+                                      <td class="py-2 pr-3 text-right tabular-nums">{fmtNumber(row.mean)}</td>
+                                      <td class="py-2 pr-3 text-right tabular-nums">{fmtNumber(row.rms)}</td>
+                                      <td class="py-2 pr-3 text-right tabular-nums">{fmtNs(row.ns_per_op)}</td>
+                                      <td class="py-2 pl-3 text-right tabular-nums">{row.perf_cv_pct != null ? `${row.perf_cv_pct.toFixed(1)}%` : '—'}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {desc && (
+                            <div class="mt-4 grid md:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
+                              {desc.what && <div><p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-500">{tt('experimentWhat')}</p><p class="mt-1">{desc.what}</p></div>}
+                              {desc.why && <div><p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-500">{tt('experimentWhy')}</p><p class="mt-1">{desc.why}</p></div>}
+                              {desc.interpret && <div><p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-500">{tt('experimentInterpret')}</p><p class="mt-1">{desc.interpret}</p></div>}
+                              {desc.performance_contract && <div><p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-500">{tt('experimentPerfContract')}</p><p class="mt-1">{desc.performance_contract}</p></div>}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────────── References / Provenance ───────────── -->
+      <section class="py-10 md:py-14 bg-gray-50 dark:bg-gray-900/50">
+        <div class="container-custom grid lg:grid-cols-2 gap-8">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">{tt('referencesTitle')}</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{tt('referencesIntro')}</p>
+            <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+              {bundle.scorecard.references.map(ref => (
+                <li class="flex items-start gap-2"><span class="text-brand-500 mt-0.5">•</span><span>{ref}</span></li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">{tt('provenanceTitle')}</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{tt('provenanceIntro')}</p>
+            <dl class="grid sm:grid-cols-2 gap-3 font-mono text-xs">
+              {Object.entries(bundle.scorecard.git_shas).map(([k, v]) => (
+                <div class="card p-3">
+                  <dt class="text-gray-500 dark:text-gray-400 uppercase">{k}</dt>
+                  <dd class="text-gray-900 dark:text-white break-all">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            <dl class="mt-4 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+              <div><dt class="inline text-gray-500 dark:text-gray-500">{tt('summaryOs')}:</dt> <dd class="inline">{bundle.manifest.metadata.os}</dd></div>
+              <div><dt class="inline text-gray-500 dark:text-gray-500">{tt('summaryToolchain')}:</dt> <dd class="inline">Rust {bundle.manifest.metadata.toolchain.rustc} · Python {bundle.manifest.metadata.toolchain.python} · pyerfa {bundle.manifest.metadata.toolchain.pyerfa}</dd></div>
+            </dl>
+          </div>
+        </div>
+      </section>
+    </>
+  )}
+</Layout>
+
+{bundle && <script is:inline src="https://cdn.plot.ly/plotly-basic-2.35.2.min.js"></script>}
+
+{bundle && (
+  <script is:inline define:vars={{ chartPayload, labels: { noAcc: tt('noRankableData'), noPerf: tt('noPerfData') } }}>
+    (function () {
+      'use strict';
+      function isDark() { return document.documentElement.classList.contains('dark'); }
+      function fg() { return isDark() ? '#d1d5db' : '#374151'; }
+      function grid() { return isDark() ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'; }
+
+      function emptyState(id, msg) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 dark:text-gray-600 text-sm">' + msg + '</div>';
+      }
+
+      function baseLayout() {
+        return {
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          font: { family: 'Inter, system-ui, sans-serif', color: fg(), size: 12 },
+          margin: { l: 70, r: 24, t: 16, b: 110 },
+          legend: { orientation: 'h', y: -0.32, x: 0.5, xanchor: 'center', font: { size: 11 } },
+          barmode: 'group',
+          xaxis: { tickangle: -35, automargin: true, gridcolor: grid() },
+          yaxis: { type: 'log', gridcolor: grid(), zerolinecolor: grid() },
+        };
+      }
+
+      function makeTraces(payload) {
+        return payload.series.map(function (s) {
+          return { type: 'bar', name: s.library, x: s.x, y: s.y, marker: { color: s.color } };
+        });
+      }
+
+      function renderAcc() {
+        var p = chartPayload.accuracy;
+        if (!p.series.length) return emptyState('lab-acc-chart', labels.noAcc);
+        var layout = baseLayout();
+        layout.yaxis.title = { text: 'p99 (' + p.unit + ')', font: { size: 11 } };
+        if (window.Plotly) Plotly.newPlot('lab-acc-chart', makeTraces(p), layout, { responsive: true, displaylogo: false, displayModeBar: false });
+      }
+
+      function renderPerf() {
+        var p = chartPayload.performance;
+        if (!p.series.length) return emptyState('lab-perf-chart', labels.noPerf);
+        var layout = baseLayout();
+        layout.yaxis.title = { text: 'ns/op', font: { size: 11 } };
+        if (window.Plotly) Plotly.newPlot('lab-perf-chart', makeTraces(p), layout, { responsive: true, displaylogo: false, displayModeBar: false });
+      }
+
+      function renderAll() {
+        try { renderAcc(); renderPerf(); } catch (e) { console.error('[lab] chart render failed', e); }
+      }
+
+      if (window.Plotly) {
+        renderAll();
+      } else {
+        var iv = setInterval(function () {
+          if (window.Plotly) { clearInterval(iv); renderAll(); }
+        }, 60);
+        setTimeout(function () { clearInterval(iv); }, 8000);
+      }
+
+      // Re-render on theme toggle
+      var mo = new MutationObserver(function (muts) {
+        for (var i = 0; i < muts.length; i++) {
+          if (muts[i].attributeName === 'class') { renderAll(); return; }
+        }
+      });
+      mo.observe(document.documentElement, { attributes: true });
+    })();
+  </script>
+)}

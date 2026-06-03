@@ -1,0 +1,29 @@
+---
+/**
+ * Root Redirect
+ *
+ * Redirects `/` to the default locale (`/ca/`).
+ * This is a static page compatible with GitHub Pages (no server-side rewrite).
+ */
+import { defaultLocale } from '../i18n/index';
+
+const redirectUrl = `/${defaultLocale}/`;
+---
+
+<!DOCTYPE html>
+<html lang="ca">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="refresh" content={`0;url=${redirectUrl}`} />
+    <link rel="canonical" href={redirectUrl} />
+    <title>Redirecting…</title>
+  </head>
+  <body>
+    <script is:inline define:vars={{ redirectUrl }}>
+      window.location.replace(redirectUrl);
+    </script>
+    <noscript>
+      <p>Redirecting to <a href={redirectUrl}>{redirectUrl}</a>…</p>
+    </noscript>
+  </body>
+</html>

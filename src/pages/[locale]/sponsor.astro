@@ -1,0 +1,23 @@
+---
+/**
+ * Sponsor Page (localized)
+ */
+import Layout from '../../layouts/Layout.astro';
+import SponsorSection from '../../components/SponsorSection.astro';
+import siteConfig from '../../site.config';
+import { getLocaleStaticPaths, t, type Locale } from '../../i18n/index';
+
+export function getStaticPaths() {
+  return getLocaleStaticPaths();
+}
+
+const locale = Astro.params.locale as Locale;
+---
+
+<Layout
+  locale={locale}
+  title={t(locale, 'sponsor.title', { name: siteConfig.name })}
+  description={t(locale, 'sponsor.seoDescription', { name: siteConfig.name })}
+>
+  <SponsorSection locale={locale} />
+</Layout>
