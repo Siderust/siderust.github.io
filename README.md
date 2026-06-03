@@ -47,7 +47,7 @@ Repository submodules are grouped by language:
 - `rust/` for the Rust libraries
 - `cpp/` for the C++ wrappers used to generate Doxygen docs
 - `js/` for the JavaScript and WebAssembly bindings
-- `lab/` remains at the repository root and owns benchmark/accuracy data
+- `benches/` remains at the repository root and owns benchmark/accuracy data
   generation and the versioned latest benchmark bundle consumed by the public
   dashboard.
 
@@ -59,15 +59,15 @@ aliases are no longer part of the public site.
 
 Data flow:
 
-1. The `lab/` submodule generates and exports JSON artifacts under
-   `lab/latest_results/` (`scorecard.json`, `manifest.json`,
+1. The `benches/` submodule generates and exports JSON artifacts under
+   `benches/latest_results/` (`scorecard.json`, `manifest.json`,
    `experiments/<id>.json`).
 2. The Astro page `src/pages/[locale]/benchmarks.astro` reads those files at
    build time and renders a localized dashboard.
 
 The previous React SPA viewer is no longer served by this repository. If the
-React frontend lives inside the `lab/` submodule for internal use, it must not
-publish anything under `public/lab/` of this repository.
+React frontend lives inside the `benches/` submodule for internal use, it must not
+publish anything under `public/benches/` of this repository.
 
 ### Building for Production
 
@@ -116,7 +116,7 @@ bash doxygen/generate_doxygen.sh
 │   │   └── Layout.astro
 │   ├── lib/               # Utilities and API integrations
 │   │   ├── github.ts      # GitHub API client
-│   │   └── lab/           # Lab "latest" loader, types and formatters
+│   │   └── benches/           # Lab "latest" loader, types and formatters
 │   ├── pages/             # Route pages
 │   │   ├── index.astro    # Root → /ca/ redirect
 │   │   ├── 404.astro      # Not-found page
@@ -137,7 +137,7 @@ bash doxygen/generate_doxygen.sh
 │   ├── cpp/               # C++ submodules
 │   ├── js/                # JavaScript / WASM submodules
 │   └── rust/              # Rust submodules
-├── lab/                   # Benchmark workspace
+├── benches/                   # Benchmark workspace
 ├── astro.config.mjs       # Astro configuration
 ├── tailwind.config.mjs    # Tailwind configuration
 └── tsconfig.json          # TypeScript configuration

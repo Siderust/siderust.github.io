@@ -1,7 +1,7 @@
 /**
  * Server-side loaders for the Lab "latest" export bundle.
  *
- * Reads JSON files directly from `lab/latest_results/` at build time.
+ * Reads JSON files directly from `benches/latest_results/` at build time.
  * If any artifact is missing or malformed we return `null` from `loadLabBundle()`
  * so the page can render a controlled fallback instead of crashing the build.
  */
@@ -18,7 +18,7 @@ import type {
   Scorecard,
 } from './types';
 
-const LATEST_DIR = path.join(process.cwd(), 'lab', 'latest_results');
+const LATEST_DIR = path.join(process.cwd(), 'benches', 'latest_results');
 
 type RawManifest = Partial<Manifest> & {
   git_sha?: string;

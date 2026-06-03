@@ -3,7 +3,7 @@
  * Localized benchmarks page (`/ca/benchmarks`, `/en/benchmarks`).
  *
  * Renders the latest published Lab run only — no historical runs, no comparison
- * UI, no hash routes. Reads JSON artifacts from `lab/latest_results/` at
+ * UI, no hash routes. Reads JSON artifacts from `benches/latest_results/` at
  * build time and passes a sanitized chart payload to a small inline Plotly
  * script for the two summary charts (accuracy p99 and ns/op).
  */
@@ -15,7 +15,7 @@ import {
   fmtNumber, fmtNs, fmtDate,
   isAccuracyChartable, isPerfChartable, colorFor,
 } from '../../lib/lab/format';
-import type { ScorecardExperiment, ScorecardRow } from '../../lib/lab/types';
+import type { ExperimentRowDetail, ScorecardExperiment, ScorecardFamily, ScorecardRow } from '../../lib/lab/types';
 
 export function getStaticPaths() {
   return getLocaleStaticPaths();
@@ -44,8 +44,8 @@ let chartPayload: ChartPayload = {
 };
 
 if (bundle) {
-  const experiments: ScorecardExperiment[] = bundle.scorecard.families.flatMap(f => f.experiments);
-  const expIds = experiments.map(e => e.experiment);
+  const experiments: ScorecardExperiment[] = bundle.scorecard.families.flatMap((f: ScorecardFamily) => f.experiments);
+  const expIds = experiments.map((e: ScorecardExperiment) => e.experiment);
 
   // Build accuracy series (rankable rows only; skip the reference itself)
   const accSeriesByLib = new Map<string, ChartSeries>();
@@ -217,7 +217,7 @@ function ephemerisColumnValues(values: Record<string, number | null>, col: EphCo
 
 const ephemerisSection: EphemerisSection | null = (() => {
   if (!bundle) return null;
-  const fam = bundle.scorecard.families.find(f => f.family === EPHEM_FAMILY);
+  const fam = bundle.scorecard.families.find((f: ScorecardFamily) => f.family === EPHEM_FAMILY);
   if (!fam) return null;
 
   const unit = fam.experiments[0]?.metric.unit ?? 'arcsec';
@@ -316,11 +316,11 @@ const ephemerisSection: EphemerisSection | null = (() => {
     bodies.some(bd => col.colKeys.some(colKey => bd.acc[colKey] != null || bd.perf[colKey] != null))
   );
 
-  const dataGaps = fam.experiments.flatMap(exp => {
+  const dataGaps = fam.experiments.flatMap((exp: ScorecardExperiment) => {
     const { bodyTitle } = ephemerisBodyTitle(exp.experiment);
     return exp.rows
-      .filter(row => row.status === 'skipped' || row.status === 'failed')
-      .map(row => ({
+      .filter((row: ScorecardRow) => row.status === 'skipped' || row.status === 'failed')
+      .map((row: ScorecardRow) => ({
         bodyTitle,
         candidate: row.display_name || row.library,
         status: row.status,
@@ -379,7 +379,7 @@ const ephemerisSection: EphemerisSection | null = (() => {
           <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { label: tt('summaryFamilies'), value: bundle.scorecard.families.length },
-              { label: tt('summaryExperiments'), value: bundle.scorecard.families.reduce((n, f) => n + f.experiments.length, 0) },
+              { label: tt('summaryExperiments'), value: bundle.scorecard.families.reduce((n: number, f: ScorecardFamily) => n + f.experiments.length, 0) },
               { label: tt('summaryReferences'), value: bundle.scorecard.references.length },
               { label: tt('summaryInputs'), value: bundle.manifest.config.n.toLocaleString('en-US') },
               { label: tt('summarySeed'), value: bundle.manifest.config.seed },
@@ -431,7 +431,7 @@ const ephemerisSection: EphemerisSection | null = (() => {
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{tt('familiesTitle')}</h2>
 
           <div class="space-y-12">
-            {bundle.scorecard.families.map(family => (
+            {bundle.scorecard.families.map((family: ScorecardFamily) => (
               <div>
                 <div class="mb-4 flex items-baseline justify-between gap-3">
                   <h3 class="text-xl font-bold text-gray-900 dark:text-white">{familyTitles[family.family] ?? family.family}</h3>
@@ -583,10 +583,10 @@ const ephemerisSection: EphemerisSection | null = (() => {
                   </div>
                 ) : (
                   <div class="space-y-6">
-                    {family.experiments.map(exp => {
+                    {family.experiments.map((exp: ScorecardExperiment) => {
                       const detail = bundle.experiments[exp.experiment];
                       // pick description from first row that has one
-                      const desc = detail?.rows?.find(r => r.description)?.description;
+                      const desc = detail?.rows?.find((r: ExperimentRowDetail) => r.description)?.description;
 
                       return (
                         <div class="card p-4 md:p-6">
@@ -620,9 +620,9 @@ const ephemerisSection: EphemerisSection | null = (() => {
                                 </tr>
                               </thead>
                               <tbody>
-                                {exp.rows.filter(row =>
+                                {exp.rows.filter((row: ScorecardRow) =>
                                   !EPHEM_BACKEND_PROFILES.has(row.profile ?? '')
-                                ).map(row => {
+                                ).map((row: ScorecardRow) => {
                                   const isBestAcc = row.display_name === exp.best_accuracy;
                                   const isBestPerf = row.display_name === exp.best_performance;
                                   const rowBg = isBestAcc && isBestPerf
@@ -685,7 +685,7 @@ const ephemerisSection: EphemerisSection | null = (() => {
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">{tt('referencesTitle')}</h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{tt('referencesIntro')}</p>
             <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-              {bundle.scorecard.references.map(ref => (
+              {bundle.scorecard.references.map((ref: string) => (
                 <li class="flex items-start gap-2"><span class="text-brand-500 mt-0.5">•</span><span>{ref}</span></li>
               ))}
             </ul>

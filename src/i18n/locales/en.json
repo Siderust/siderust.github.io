@@ -253,7 +253,7 @@
     "provenanceErfa": "ERFA",
     "provenanceLibnova": "libnova",
     "fallbackTitle": "Lab data not available",
-    "fallbackDesc": "The latest Lab artifacts could not be loaded. Make sure <code>lab/latest_results/scorecard.json</code> and <code>lab/latest_results/manifest.json</code> are present, then rebuild.",
+    "fallbackDesc": "The latest Lab artifacts could not be loaded. Make sure <code>benches/latest_results/scorecard.json</code> and <code>benches/latest_results/manifest.json</code> are present, then rebuild.",
     "modelMismatchNote": "model-mismatch — different physical model than the reference",
     "skippedRowsHidden": "{count} skipped or non-rankable rows shown below."
   },

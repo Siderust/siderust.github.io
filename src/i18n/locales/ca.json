@@ -253,7 +253,7 @@
     "provenanceErfa": "ERFA",
     "provenanceLibnova": "libnova",
     "fallbackTitle": "Dades del Lab no disponibles",
-    "fallbackDesc": "No s'han pogut carregar els artefactes més recents del Lab. Comprova que existeixen <code>lab/latest_results/scorecard.json</code> i <code>lab/latest_results/manifest.json</code> i torna a compilar.",
+    "fallbackDesc": "No s'han pogut carregar els artefactes més recents del Lab. Comprova que existeixen <code>benches/latest_results/scorecard.json</code> i <code>benches/latest_results/manifest.json</code> i torna a compilar.",
     "modelMismatchNote": "model-mismatch — model físic diferent al de la referència",
     "skippedRowsHidden": "{count} files saltades o no puntuables es mostren a continuació."
   },
