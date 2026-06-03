@@ -49,3 +49,6 @@
 [submodule "products/js/siderust-js"]
 	path = products/js/siderust-js
 	url = git@github.com:Siderust/siderust-js.git
+[submodule "benches"]
+	path = benches
+	url = git@github.com:Siderust/benches.git
