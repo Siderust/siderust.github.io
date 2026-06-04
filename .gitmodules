@@ -52,3 +52,6 @@
 [submodule "benches"]
 	path = benches
 	url = git@github.com:Siderust/benches.git
+[submodule "siderust-profile"]
+	path = siderust-profile
+	url = git@github.com:Siderust/.github.git
