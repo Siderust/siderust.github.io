@@ -6,14 +6,19 @@ DOXYGEN_DIR="${REPO_ROOT}/doxygen"
 
 for project in siderust-cpp tempoch-cpp qtty-cpp; do
     case "${project}" in
-        siderust-cpp) PROJECT_DIR="${REPO_ROOT}/products/siderust-cpp" ;;
-        tempoch-cpp)  PROJECT_DIR="${REPO_ROOT}/products/siderust-cpp/tempoch-cpp" ;;
-        qtty-cpp)     PROJECT_DIR="${REPO_ROOT}/products/siderust-cpp/tempoch-cpp/qtty-cpp" ;;
+        siderust-cpp) PROJECT_DIR="${REPO_ROOT}/products/cpp/siderust-cpp" ;;
+        tempoch-cpp)  PROJECT_DIR="${REPO_ROOT}/products/cpp/tempoch-cpp" ;;
+        qtty-cpp)     PROJECT_DIR="${REPO_ROOT}/products/cpp/qtty-cpp" ;;
     esac
     TEMPLATE="${PROJECT_DIR}/docs/Doxyfile.in"
 
+    if [ ! -d "${PROJECT_DIR}" ]; then
+        echo "Warning: Project directory not found for ${project}: ${PROJECT_DIR}, skipping."
+        continue
+    fi
+
     if [ ! -f "${TEMPLATE}" ]; then
-        echo "Warning: No Doxyfile.in found for ${project}, skipping."
+        echo "Warning: No Doxyfile.in found for ${project} at ${TEMPLATE}, skipping."
         continue
     fi
 
