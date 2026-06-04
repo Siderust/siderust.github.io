@@ -4,6 +4,11 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DOXYGEN_DIR="${REPO_ROOT}/doxygen"
 
+project_version() {
+    local cmake_file="$1"
+    sed -nE 's/^[[:space:]]*project\([^)]*VERSION[[:space:]]+([^[:space:])]+).*$/\1/p' "${cmake_file}" | head -n1
+}
+
 for project in siderust-cpp tempoch-cpp qtty-cpp; do
     case "${project}" in
         siderust-cpp) PROJECT_DIR="${REPO_ROOT}/products/cpp/siderust-cpp" ;;
@@ -26,12 +31,17 @@ for project in siderust-cpp tempoch-cpp qtty-cpp; do
     mkdir -p "${OUTPUT_DIR}"
 
     DOXYFILE="${OUTPUT_DIR}/Doxyfile"
+    VERSION="$(project_version "${PROJECT_DIR}/CMakeLists.txt")"
+    if [ -z "${VERSION}" ]; then
+        VERSION="unknown"
+    fi
 
     sed \
         -e "s|@CMAKE_CURRENT_SOURCE_DIR@|${PROJECT_DIR}|g" \
         -e "s|@CMAKE_CURRENT_BINARY_DIR@/docs/doxygen|${OUTPUT_DIR}|g" \
         -e "s|@CMAKE_CURRENT_BINARY_DIR@|${OUTPUT_DIR}|g" \
-        -e "s|@PROJECT_VERSION@|0.0.0|g" \
+        -e "s|@PROJECT_VERSION@|${VERSION}|g" \
+        -e "s|@REPO_ROOT@|${REPO_ROOT}|g" \
         "${TEMPLATE}" > "${DOXYFILE}"
 
     echo "Generating Doxygen docs for ${project}..."
