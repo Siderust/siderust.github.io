@@ -12,7 +12,7 @@ import Layout from '../../layouts/Layout.astro';
 import { getLocaleStaticPaths, t, type Locale } from '../../i18n/index';
 import { loadLabBundle } from '../../lib/lab/data';
 import {
-  fmtNumber, fmtNs, fmtDate,
+  fmtNumber, fmtNs, fmtPct, fmtDate,
   isAccuracyChartable, isPerfChartable, colorFor,
 } from '../../lib/lab/format';
 import type { ExperimentRowDetail, ScorecardExperiment, ScorecardFamily, ScorecardRow } from '../../lib/lab/types';
@@ -31,17 +31,125 @@ const GENERIC_MODEL_SOURCES = new Set(['SIDERUST', 'ASTROPY', 'LIBNOVA', 'ANISE'
 // Siderust variant profiles that are ephemeris-backend labels —
 // meaningless (and misleading) in rotation/transform-experiment context
 const EPHEM_BACKEND_PROFILES = new Set(['de440', 'elp2000']);
+const EPHEM_FAMILY = 'solar_system_ephemerides';
 
 interface ChartSeries { library: string; color: string; x: string[]; y: number[]; }
 interface ChartPayload {
   accuracy: { series: ChartSeries[]; experiments: string[]; unit: string };
   performance: { series: ChartSeries[]; experiments: string[] };
 }
+interface SiderustSummary {
+  accuracyWins: number | null;
+  accuracyTotal: number | null;
+  averageAccuracyDistancePct: number | null;
+  ephemerisSpeedWins: number | null;
+  ephemerisSpeedTotal: number | null;
+  medianSiderustEphemerisNs: number | null;
+  medianOtherEphemerisNs: number | null;
+  ephemerisSpeedup: number | null;
+}
 
 let chartPayload: ChartPayload = {
   accuracy: { series: [], experiments: [], unit: '' },
   performance: { series: [], experiments: [] },
 };
+
+function median(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
+}
+
+function average(values: number[]): number | null {
+  if (values.length === 0) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function isSiderustWinner(value: string | null | undefined): boolean {
+  return value?.startsWith('siderust') === true;
+}
+
+const siderustSummary: SiderustSummary | null = (() => {
+  if (!bundle) return null;
+
+  const experiments: ScorecardExperiment[] = bundle.scorecard.families.flatMap((f: ScorecardFamily) => f.experiments);
+  const ephemerisFamily = bundle.scorecard.families.find((f: ScorecardFamily) => f.family === EPHEM_FAMILY);
+  const ephemerisExperiments = ephemerisFamily?.experiments ?? [];
+  const normalizedAccuracyDistances: number[] = [];
+  const siderustEphemerisNs: number[] = [];
+  const otherEphemerisNs: number[] = [];
+
+  for (const exp of experiments) {
+    const rankableRows = exp.rows.filter((row: ScorecardRow) =>
+      row.status === 'ok' &&
+      row.rankable_accuracy === true &&
+      typeof row.p99 === 'number' &&
+      Number.isFinite(row.p99)
+    );
+    const siderustRows = rankableRows.filter((row: ScorecardRow) => row.library === 'siderust');
+    if (rankableRows.length === 0 || siderustRows.length === 0) continue;
+
+    const best = Math.min(...rankableRows.map((row: ScorecardRow) => row.p99 as number));
+    const worst = Math.max(...rankableRows.map((row: ScorecardRow) => row.p99 as number));
+    const bestSiderust = Math.min(...siderustRows.map((row: ScorecardRow) => row.p99 as number));
+    const distance = worst > best ? (bestSiderust - best) / (worst - best) : 0;
+    normalizedAccuracyDistances.push(Math.max(0, Math.min(1, distance)));
+  }
+
+  for (const exp of ephemerisExperiments) {
+    for (const row of exp.rows) {
+      if (
+        row.status !== 'ok' ||
+        row.perf_valid !== true ||
+        typeof row.ns_per_op !== 'number' ||
+        !Number.isFinite(row.ns_per_op)
+      ) continue;
+
+      if (row.library === 'siderust') {
+        siderustEphemerisNs.push(row.ns_per_op);
+      } else {
+        otherEphemerisNs.push(row.ns_per_op);
+      }
+    }
+  }
+
+  const medianSiderustEphemerisNs = median(siderustEphemerisNs);
+  const medianOtherEphemerisNs = median(otherEphemerisNs);
+  const ephemerisSpeedup =
+    medianSiderustEphemerisNs != null &&
+    medianSiderustEphemerisNs > 0 &&
+    medianOtherEphemerisNs != null &&
+    Number.isFinite(medianOtherEphemerisNs)
+      ? medianOtherEphemerisNs / medianSiderustEphemerisNs
+      : null;
+
+  return {
+    accuracyWins: experiments.filter((exp: ScorecardExperiment) => isSiderustWinner(exp.best_accuracy)).length,
+    accuracyTotal: experiments.length,
+    averageAccuracyDistancePct: (() => {
+      const value = average(normalizedAccuracyDistances);
+      return value == null ? null : value * 100;
+    })(),
+    ephemerisSpeedWins: ephemerisExperiments.filter((exp: ScorecardExperiment) => isSiderustWinner(exp.best_performance)).length,
+    ephemerisSpeedTotal: ephemerisExperiments.length,
+    medianSiderustEphemerisNs,
+    medianOtherEphemerisNs,
+    ephemerisSpeedup: ephemerisSpeedup != null && Number.isFinite(ephemerisSpeedup) ? ephemerisSpeedup : null,
+  };
+})();
+
+function fmtRatio(numerator: number | null, denominator: number | null): string {
+  if (numerator == null || denominator == null || denominator <= 0) return '—';
+  return `${numerator}/${denominator}`;
+}
+
+function fmtSpeedup(value: number | null): string {
+  if (value == null || !Number.isFinite(value)) return '—';
+  return `${value.toFixed(1)}×`;
+}
 
 if (bundle) {
   const experiments: ScorecardExperiment[] = bundle.scorecard.families.flatMap((f: ScorecardFamily) => f.experiments);
@@ -105,8 +213,6 @@ const familyTitles: Record<string, string> = {
 };
 
 // ─── Solar system ephemerides — matrix data ──────────────────────────────────
-
-const EPHEM_FAMILY = 'solar_system_ephemerides';
 
 // Model sources that are just the library name (not informative as a sub-label)
 const GENERIC_MATRIX_SOURCES = new Set(['SIDERUST', 'ASTROPY', 'LIBNOVA', 'ANISE', 'ERFA']);
@@ -372,8 +478,57 @@ const ephemerisSection: EphemerisSection | null = (() => {
         </div>
       </section>
 
+      <!-- ───────────── Siderust summary ───────────── -->
+      {siderustSummary && (
+        <section class="py-10 md:py-14 bg-white dark:bg-gray-950">
+          <div class="container-custom">
+            <div class="mb-6 max-w-3xl">
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-400">{tt('siderustSummaryEyebrow')}</p>
+              <h2 class="mt-2 text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{tt('siderustSummaryTitle')}</h2>
+              <p class="mt-3 text-gray-600 dark:text-gray-400">{tt('siderustSummarySubtitle')}</p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                {
+                  label: tt('siderustSummaryAccuracyWins'),
+                  value: fmtRatio(siderustSummary.accuracyWins, siderustSummary.accuracyTotal),
+                  desc: tt('siderustSummaryAccuracyWinsDesc', {
+                    distance: fmtPct(siderustSummary.averageAccuracyDistancePct),
+                  }),
+                },
+                {
+                  label: tt('siderustSummaryEphemerisSpeedWins'),
+                  value: fmtRatio(siderustSummary.ephemerisSpeedWins, siderustSummary.ephemerisSpeedTotal),
+                  desc: tt('siderustSummaryEphemerisSpeedWinsDesc'),
+                },
+                {
+                  label: tt('siderustSummaryMedianSpeed'),
+                  value: fmtSpeedup(siderustSummary.ephemerisSpeedup),
+                  desc: tt('siderustSummaryMedianSpeedDesc', {
+                    siderust: fmtNs(siderustSummary.medianSiderustEphemerisNs),
+                    other: fmtNs(siderustSummary.medianOtherEphemerisNs),
+                  }),
+                },
+                {
+                  label: tt('siderustSummaryReferenceAgreement'),
+                  value: tt('siderustSummaryReferenceValue'),
+                  desc: tt('siderustSummaryReferenceDesc'),
+                },
+              ].map(item => (
+                <div class="card p-5 border-l-4 border-brand-500">
+                  <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{item.label}</p>
+                  <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white tabular-nums">{item.value}</p>
+                  <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <!-- ───────────── Summary ───────────── -->
-      <section class="py-10 md:py-14 bg-white dark:bg-gray-950">
+      <section class="py-10 md:py-14 bg-gray-50 dark:bg-gray-900/50">
         <div class="container-custom">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{tt('summaryTitle')}</h2>
           <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
