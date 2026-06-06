@@ -38,6 +38,53 @@ function normalizeText(value: unknown): string {
     .trim();
 }
 
+function tokenizeVersion(version: string): Array<string | number> {
+  return version
+    .split(/([0-9]+)/)
+    .filter(Boolean)
+    .map((part) => (/^[0-9]+$/.test(part) ? Number(part) : part.toLowerCase()));
+}
+
+function compareVersions(a: string, b: string): number {
+  const left = tokenizeVersion(a);
+  const right = tokenizeVersion(b);
+  const length = Math.max(left.length, right.length);
+
+  for (let i = 0; i < length; i++) {
+    const leftPart = left[i];
+    const rightPart = right[i];
+
+    if (leftPart === undefined) return -1;
+    if (rightPart === undefined) return 1;
+    if (leftPart === rightPart) continue;
+
+    if (typeof leftPart === 'number' && typeof rightPart === 'number') {
+      return leftPart - rightPart;
+    }
+
+    return String(leftPart).localeCompare(String(rightPart));
+  }
+
+  return 0;
+}
+
+function findLatestPackageFile(
+  files: string[],
+  packageName: string,
+  format: 'deb' | 'rpm'
+): string | null {
+  const escapedPackageName = packageName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = format === 'deb'
+    ? new RegExp(`^${escapedPackageName}_([^_]+)_[^_]+\\.deb$`)
+    : new RegExp(`^${escapedPackageName}-(.+)-[^-]+\\.[^.]+\\.rpm$`);
+
+  return files
+    .map((file) => ({ file, version: pattern.exec(file)?.[1] }))
+    .filter((entry): entry is { file: string; version: string } => Boolean(entry.version))
+    .sort((a, b) => compareVersions(b.version, a.version))
+    [0]?.file ?? null;
+}
+
 // Fetch detailed metadata including README
 const project = await getRepoMetadata(slug, true);
 
@@ -65,13 +112,11 @@ if (packageName) {
   const root = resolve('.');
   try {
     const aptFiles = await readdir(resolve(root, 'apt'));
-    const found = aptFiles.find(f => f.startsWith(packageName + '_') && f.endsWith('.deb'));
-    if (found) debFile = found;
+    debFile = findLatestPackageFile(aptFiles, packageName, 'deb');
   } catch { /* apt dir missing */ }
   try {
     const rpmFiles = await readdir(resolve(root, 'rpm'));
-    const found = rpmFiles.find(f => f.startsWith(packageName + '-') && f.endsWith('.rpm'));
-    if (found) rpmFile = found;
+    rpmFile = findLatestPackageFile(rpmFiles, packageName, 'rpm');
   } catch { /* rpm dir missing */ }
 }
 ---
