@@ -28,8 +28,8 @@ jobs:
       - name: Checkout required submodules
         run: |
           git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git submodule sync --recursive -- benches products/cpp/siderust-cpp
-          git submodule update --init --recursive benches products/cpp/siderust-cpp
+          git submodule sync --recursive -- benches products/cpp/siderust-cpp products/cpp/qtty-cpp products/cpp/tempoch-cpp
+          git submodule update --init --recursive benches products/cpp/siderust-cpp products/cpp/qtty-cpp products/cpp/tempoch-cpp
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -39,6 +39,18 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Validate generated project metadata
+        run: npm run generate:projects -- --check
+
+      - name: Validate i18n
+        run: npm run validate:i18n
+
+      - name: Validate project install snippets
+        run: npm run validate:projects
+
+      - name: Validate package publishing contract
+        run: npm run validate:packages
 
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh

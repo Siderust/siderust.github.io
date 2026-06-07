@@ -6,10 +6,14 @@
  * Usage: npx tsx scripts/validate-i18n.ts
  */
 
-import { readFileSync, readdirSync } from 'fs';
-import { join, basename } from 'path';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join, basename, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const LOCALES_DIR = join(import.meta.dirname ?? __dirname, '..', 'src', 'i18n', 'locales');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = join(__dirname, '..');
+const LOCALES_DIR = join(REPO_ROOT, 'src', 'i18n', 'locales');
+const SOURCE_DIR = join(REPO_ROOT, 'src');
 
 // ── helpers ──────────────────────────────────────────────────────────
 
@@ -92,6 +96,60 @@ for (const [name, keys] of locales) {
       console.log(`⚠   ${name}: ${typeMismatch.length} type mismatch(es):`);
       typeMismatch.forEach((m) => console.log(`      ~ ${m}`));
     }
+  }
+}
+
+function listSourceFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      return listSourceFiles(fullPath);
+    }
+    return /\.(astro|ts|tsx|js|jsx)$/.test(entry.name) ? [fullPath] : [];
+  });
+}
+
+function scanTranslationUsages(): Map<string, Set<string>> {
+  const usages = new Map<string, Set<string>>();
+  const usagePattern = /\bt\(\s*[^,\n]+,\s*(['"])([^'"]+)\1/g;
+
+  for (const file of listSourceFiles(SOURCE_DIR)) {
+    const source = readFileSync(file, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|[^:])\/\/.*$/gm, '$1');
+    for (const match of source.matchAll(usagePattern)) {
+      const key = match[2];
+      if (!usages.has(key)) {
+        usages.set(key, new Set());
+      }
+      usages.get(key)!.add(file.replace(`${REPO_ROOT}/`, ''));
+    }
+  }
+
+  return usages;
+}
+
+const usages = scanTranslationUsages();
+const missingUsages: Array<{ key: string; files: string[]; locales: string[] }> = [];
+for (const [key, filesForKey] of usages) {
+  const missingLocales = [...locales.entries()]
+    .filter(([, keys]) => !keys.has(key))
+    .map(([name]) => name);
+
+  if (missingLocales.length > 0) {
+    missingUsages.push({
+      key,
+      files: [...filesForKey].sort(),
+      locales: missingLocales,
+    });
+  }
+}
+
+if (missingUsages.length > 0) {
+  errors += missingUsages.length;
+  console.log(`❌  ${missingUsages.length} t(locale, "...") usage(s) are missing from locale files:`);
+  for (const usage of missingUsages) {
+    console.log(`      - ${usage.key} missing in ${usage.locales.join(', ')} (${usage.files.join(', ')})`);
   }
 }
 

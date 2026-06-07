@@ -28,6 +28,8 @@ export interface ProjectConfig {
   purpose?: string;
   /** Getting started code snippet or instructions */
   gettingStarted?: string;
+  /** Getting started snippet with generated package metadata placeholders */
+  gettingStartedTemplate?: string;
   /** Tags for filtering */
   tags?: string[];
   /** Package name used to find .deb/.rpm files in apt/ and rpm/ directories */
@@ -90,7 +92,7 @@ const siteConfig: SiteConfig = {
   orgUrl: 'https://github.com/Siderust',
   tagline: 'Precision astronomy & orbit analysis libraries for embedded and research systems',
   description: 'Siderust builds mission-critical astronomical computation and physical modeling libraries in pure Rust. From embedded spacecraft flight software to research-grade pipelines, validated against authoritative ephemerides, zero unsafe code, zero hidden allocations. ',
-  siteUrl: 'https://siderust.github.io',
+  siteUrl: 'https://siderust.org',
   ogImage: '/og-image.svg',
   logo: '/logo.webp',
   
@@ -118,9 +120,9 @@ const siteConfig: SiteConfig = {
         'No unsafe blocks, no hidden allocations',
         'Validated against authoritative data',
       ],
-      gettingStarted: `# Add to your Cargo.toml
+      gettingStartedTemplate: `# Add to your Cargo.toml
 [dependencies]
-siderust = "0.1"
+siderust = "{{ crates.siderust.version }}"
 
 # Compute Mars position
 use siderust::{
@@ -147,9 +149,9 @@ println!("{}", mars.position);`,
         'SI and astronomical units',
         'No-std compatible',
       ],
-      gettingStarted: `# Add to your Cargo.toml
+      gettingStartedTemplate: `# Add to your Cargo.toml
 [dependencies]
-qtty = "0.1"
+qtty = "{{ crates.qtty.version }}"
 
 # Use physical quantities
 use qtty::{AU, KM, DAY};
@@ -173,9 +175,9 @@ let speed = distance / period;  // Compiler validates dimensions`,
         'Serde support',
         'No-std compatible',
       ],
-      gettingStarted: `# Add to your Cargo.toml
+      gettingStartedTemplate: `# Add to your Cargo.toml
 [dependencies]
-affn = "0.1"
+affn = "{{ crates.affn.version }}"
 
 # Transform some points
 use affn::{Point2, Transform2};
@@ -200,9 +202,9 @@ let transformed = transform.apply(point);`,
         'Period intervals with intersection / complement',
         'No-std compatible',
       ],
-      gettingStarted: `# Add to your Cargo.toml
+      gettingStartedTemplate: `# Add to your Cargo.toml
 [dependencies]
-tempoch = "0.3"
+tempoch = "{{ crates.tempoch.version }}"
 
 # Convert UTC to Julian Date
 use chrono::Utc;
@@ -228,9 +230,9 @@ println!("MJD(TT): {now_mjd}");`,
         'Uniform piecewise segment tables with O(1) lookup',
         'Generic over ChebyScalar (works with qtty quantities)',
       ],
-      gettingStarted: `# Add to your Cargo.toml
+      gettingStartedTemplate: `# Add to your Cargo.toml
 [dependencies]
-cheby = "0.1"
+cheby = "{{ crates.cheby.version }}"
 
 # Interpolate sin(x) with Chebyshev polynomials
 use cheby::{evaluate, fit_coeffs, nodes};
@@ -343,7 +345,7 @@ console.log(altitude.value, altitude.unit);`,
         'Built-in named observatories (Paranal, Mauna Kea, …)',
         'CMake integration with automatic Rust FFI build',
       ],
-      docsUrl: 'https://siderust.github.io/doxygen/siderust-cpp/html/index.html',
+      docsUrl: 'https://siderust.org/doxygen/siderust-cpp/html/index.html',
       gettingStarted: `// CMakeLists.txt
 find_package(siderust_cpp REQUIRED)
 target_link_libraries(myapp PRIVATE siderust::siderust_cpp)
@@ -372,7 +374,7 @@ auto alt = sun::altitude_at(obs, MJD::from_jd(jd));`,
         'Generated headers from qtty-ffi definitions',
         'CMake target for easy integration',
       ],
-      docsUrl: 'https://siderust.github.io/doxygen/qtty-cpp/html/index.html',
+      docsUrl: 'https://siderust.org/doxygen/qtty-cpp/html/index.html',
       gettingStarted: `// CMakeLists.txt
 add_subdirectory(path/to/qtty-cpp)
 target_link_libraries(myapp PRIVATE qtty_cpp)
@@ -402,7 +404,7 @@ Meter m = distance.to<Meter>();`,
         'Exception-based error model (typed C++ exceptions)',
         'CMake integration with automatic Rust FFI build',
       ],
-      docsUrl: 'https://siderust.github.io/doxygen/tempoch-cpp/html/index.html',
+      docsUrl: 'https://siderust.org/doxygen/tempoch-cpp/html/index.html',
       gettingStarted: `// CMakeLists.txt
 find_package(tempoch_cpp REQUIRED)
 target_link_libraries(myapp PRIVATE tempoch::tempoch_cpp)

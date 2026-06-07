@@ -2,4 +2,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://siderust.github.io/sitemap.xml
+Sitemap: https://siderust.org/sitemap.xml

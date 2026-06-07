@@ -254,7 +254,7 @@ interface EphBodyData {
   perf: Record<string, number | null>; // keyed by colKey
   siderust: EphRowStats | null;
   bestAccColKey: string | null;
-  bestPerfColKey: string | null;
+  bestPerfColKeys: string[];
 }
 
 interface EphDataGap {
@@ -319,6 +319,23 @@ function ephemerisColumnValues(values: Record<string, number | null>, col: EphCo
   return col.colKeys
     .map(colKey => values[colKey])
     .filter((value): value is number => value != null);
+}
+
+function isBestPerformanceRow(row: ScorecardRow, exp: ScorecardExperiment): boolean {
+  if (
+    row.status !== 'ok' ||
+    row.perf_valid !== true ||
+    typeof row.ns_per_op !== 'number' ||
+    !Number.isFinite(row.ns_per_op)
+  ) {
+    return false;
+  }
+
+  if (row.performance_delta_vs_best_pct === 0) {
+    return true;
+  }
+
+  return row.display_name === exp.best_performance;
 }
 
 const ephemerisSection: EphemerisSection | null = (() => {
@@ -405,16 +422,32 @@ const ephemerisSection: EphemerisSection | null = (() => {
     }
 
     let bestAccColKey: string | null = null, bestAccVal = Infinity;
-    let bestPerfColKey: string | null = null, bestPerfVal = Infinity;
+    const bestPerfColKeys = new Set<string>();
+    let bestPerfVal = Infinity;
     for (const col of allCols) {
       const colKey = col.colKeys[0];
       const av = acc[colKey];
       if (av != null && av < bestAccVal) { bestAccVal = av; bestAccColKey = colKey; }
+      const row = canonical.get(colKey);
+      if (row && isBestPerformanceRow(row, exp)) {
+        bestPerfColKeys.add(colKey);
+      }
       const pv = perf[colKey];
-      if (pv != null && pv < bestPerfVal) { bestPerfVal = pv; bestPerfColKey = colKey; }
+      if (bestPerfColKeys.size === 0 && pv != null && pv < bestPerfVal) {
+        bestPerfVal = pv;
+      }
     }
 
-    bodies.push({ body: bodyId, bodyTitle, acc, perf, siderust, bestAccColKey, bestPerfColKey });
+    if (bestPerfColKeys.size === 0 && bestPerfVal < Infinity) {
+      for (const col of allCols) {
+        const colKey = col.colKeys[0];
+        if (perf[colKey] === bestPerfVal) {
+          bestPerfColKeys.add(colKey);
+        }
+      }
+    }
+
+    bodies.push({ body: bodyId, bodyTitle, acc, perf, siderust, bestAccColKey, bestPerfColKeys: [...bestPerfColKeys] });
   }
 
   // Drop columns where every body has null in both acc and perf (e.g., skipped ANISE)
@@ -678,12 +711,23 @@ const ephemerisSection: EphemerisSection | null = (() => {
                               <tr class="border-b border-gray-100 dark:border-gray-900">
                                 <td class="py-2 pr-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{bd.bodyTitle}</td>
                                 {ephemerisSection.columns.map(col => {
-                                  const values = ephemerisColumnValues(bd.perf, col);
-                                  const isBest = bd.bestPerfColKey != null && col.colKeys.includes(bd.bestPerfColKey);
+                                  const entries = col.colKeys
+                                    .map(colKey => ({ colKey, value: bd.perf[colKey] }))
+                                    .filter((entry): entry is { colKey: string; value: number } => entry.value != null);
+                                  const isBest = entries.some(entry => bd.bestPerfColKeys.includes(entry.colKey));
                                   return (
                                     <td class={`py-2 pr-3 text-right tabular-nums whitespace-nowrap${isBest ? ' bg-blue-50 dark:bg-blue-900/10 font-semibold' : ''}`}>
-                                      {values.length > 0 ? values.map(v => fmtNs(v)).join(' / ') : '—'}
-                                      {isBest && <span class="ml-1 text-xs text-blue-700 dark:text-blue-400">⚡</span>}
+                                      {entries.length > 0 ? entries.map((entry, index) => (
+                                        <>
+                                          {index > 0 && <span class="mx-1 text-gray-400 dark:text-gray-600">/</span>}
+                                          <span>
+                                            {fmtNs(entry.value)}
+                                            {bd.bestPerfColKeys.includes(entry.colKey) && (
+                                              <span class="ml-1 text-xs text-blue-700 dark:text-blue-400" title={tt('bestPerfLabel')}>⚡</span>
+                                            )}
+                                          </span>
+                                        </>
+                                      )) : '—'}
                                     </td>
                                   );
                                 })}
@@ -779,7 +823,7 @@ const ephemerisSection: EphemerisSection | null = (() => {
                                   !EPHEM_BACKEND_PROFILES.has(row.profile ?? '')
                                 ).map((row: ScorecardRow) => {
                                   const isBestAcc = row.display_name === exp.best_accuracy;
-                                  const isBestPerf = row.display_name === exp.best_performance;
+                                  const isBestPerf = isBestPerformanceRow(row, exp);
                                   const rowBg = isBestAcc && isBestPerf
                                     ? 'bg-purple-50 dark:bg-purple-900/10'
                                     : isBestAcc

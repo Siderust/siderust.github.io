@@ -75,8 +75,19 @@ export function t(
 ): string {
   let value =
     getNestedValue(translations[locale], key) ??
-    getNestedValue(translations[defaultLocale], key) ??
-    key;
+    getNestedValue(translations[defaultLocale], key);
+
+  if (value === undefined) {
+    const isProduction =
+      (typeof import.meta !== 'undefined' && import.meta.env?.PROD) ||
+      (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production');
+
+    if (isProduction) {
+      throw new Error(`Missing translation key "${key}" for locale "${locale}"`);
+    }
+
+    value = key;
+  }
 
   if (params) {
     for (const [k, v] of Object.entries(params)) {

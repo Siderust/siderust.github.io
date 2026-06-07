@@ -1,6 +1,6 @@
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "qtty-cpp"
-PROJECT_NUMBER         = "0.0.0"
+PROJECT_NUMBER         = "0.4.5"
 PROJECT_BRIEF          = "Header-only C++ wrapper for qtty"
 PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = "/home/valles/workspace/siderust.github.io/doxygen/qtty-cpp"

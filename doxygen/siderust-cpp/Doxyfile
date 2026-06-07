@@ -1,8 +1,8 @@
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "siderust-cpp"
-PROJECT_NUMBER         = "0.0.0"
+PROJECT_NUMBER         = "0.7.0"
 PROJECT_BRIEF          = "Header-only C++ wrapper for siderust"
-PROJECT_LOGO           = "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/../../public/logo.png"
+PROJECT_LOGO           = "/home/valles/workspace/siderust.github.io/public/logo.webp"
 OUTPUT_DIRECTORY       = "/home/valles/workspace/siderust.github.io/doxygen/siderust-cpp"
 OUTPUT_LANGUAGE        = English
 BRIEF_MEMBER_DESC      = YES
@@ -35,8 +35,9 @@ INPUT                  = \
     "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/docs" \
     "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/docs/mainpage.md" \
     "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/README.md" \
-    "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/include/siderust"
-FILE_PATTERNS          = *.hpp *.md
+    "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/include/siderust" \
+    "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/examples"
+FILE_PATTERNS          = *.hpp *.md *.dox
 RECURSIVE              = YES
 EXAMPLE_PATH           = "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/examples"
 EXAMPLE_PATTERNS       = *.cpp
@@ -48,8 +49,8 @@ SKIP_FUNCTION_MACROS   = YES
 INCLUDE_PATH           = \
     "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/include" \
     "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/tempoch-cpp/qtty-cpp/include" \
-    "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/siderust-ffi/include" \
-    "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/siderust-ffi/siderust/dev-deps/tempoch/tempoch-ffi/include"
+    "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/siderust/siderust-ffi/include" \
+    "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/tempoch-cpp/tempoch/tempoch-ffi/include"
 
 SOURCE_BROWSER         = YES
 INLINE_SOURCES         = NO
@@ -62,6 +63,7 @@ HTML_OUTPUT            = html
 HTML_DYNAMIC_MENUS     = YES
 GENERATE_TREEVIEW      = YES
 TOC_INCLUDE_HEADINGS   = 2
+HTML_EXTRA_STYLESHEET  = "/home/valles/workspace/siderust.github.io/products/cpp/siderust-cpp/docs/doxygen-custom.css"
 
 GENERATE_LATEX         = NO
 GENERATE_XML           = NO

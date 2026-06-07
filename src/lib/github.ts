@@ -6,6 +6,7 @@
 
 import siteConfig, { type ProjectConfig } from '../site.config';
 import { t, type Locale, defaultLocale } from '../i18n/index';
+import { getProjectGettingStarted } from './projectMetadata';
 
 /**
  * Decode base64 string (works in both Node.js and browser)
@@ -432,7 +433,7 @@ export async function getRepoMetadata(
     // Config data
     features: projectConfig?.features || [],
     purpose: projectConfig?.purpose || null,
-    gettingStarted: projectConfig?.gettingStarted || null,
+    gettingStarted: getProjectGettingStarted(projectConfig),
     tags: projectConfig?.tags || repoData?.topics || [],
 
     // README

@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://siderust.github.io/</loc>
+    <loc>https://siderust.org/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://siderust.github.io/projects/</loc>
+    <loc>https://siderust.org/projects/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siderust.github.io/projects/siderust/</loc>
+    <loc>https://siderust.org/projects/siderust/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://siderust.github.io/projects/qtty/</loc>
+    <loc>https://siderust.org/projects/qtty/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://siderust.github.io/projects/affn/</loc>
+    <loc>https://siderust.org/projects/affn/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://siderust.github.io/about/</loc>
+    <loc>https://siderust.org/about/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

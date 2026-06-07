@@ -18,13 +18,13 @@ for project in siderust-cpp tempoch-cpp qtty-cpp; do
     TEMPLATE="${PROJECT_DIR}/docs/Doxyfile.in"
 
     if [ ! -d "${PROJECT_DIR}" ]; then
-        echo "Warning: Project directory not found for ${project}: ${PROJECT_DIR}, skipping."
-        continue
+        echo "Error: Project directory not found for ${project}: ${PROJECT_DIR}" >&2
+        exit 1
     fi
 
     if [ ! -f "${TEMPLATE}" ]; then
-        echo "Warning: No Doxyfile.in found for ${project} at ${TEMPLATE}, skipping."
-        continue
+        echo "Error: No Doxyfile.in found for ${project} at ${TEMPLATE}" >&2
+        exit 1
     fi
 
     OUTPUT_DIR="${DOXYGEN_DIR}/${project}"
@@ -46,5 +46,9 @@ for project in siderust-cpp tempoch-cpp qtty-cpp; do
 
     echo "Generating Doxygen docs for ${project}..."
     doxygen "${DOXYFILE}"
+    if [ ! -f "${OUTPUT_DIR}/html/index.html" ]; then
+        echo "Error: Doxygen did not generate ${OUTPUT_DIR}/html/index.html for ${project}" >&2
+        exit 1
+    fi
     echo "Done: ${OUTPUT_DIR}/html"
 done
