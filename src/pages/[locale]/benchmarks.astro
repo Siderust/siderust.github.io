@@ -245,6 +245,8 @@ interface EphRowStats {
   mean: number | null; p50: number | null; p99: number | null;
   max: number | null; rms: number | null;
   ns_per_op: number | null; perf_cv_pct: number | null;
+  perf_valid: boolean;
+  perf_warnings: string[];
   model_source: string | null;
 }
 
@@ -338,6 +340,13 @@ function isBestPerformanceRow(row: ScorecardRow, exp: ScorecardExperiment): bool
   return row.display_name === exp.best_performance;
 }
 
+function perfWarningTitle(row: Pick<ScorecardRow, 'perf_valid' | 'perf_warnings'>): string | undefined {
+  if (row.perf_valid !== false) return undefined;
+  return row.perf_warnings.length > 0
+    ? row.perf_warnings.join(' ')
+    : 'Performance result is not valid for comparison.';
+}
+
 const ephemerisSection: EphemerisSection | null = (() => {
   if (!bundle) return null;
   const fam = bundle.scorecard.families.find((f: ScorecardFamily) => f.family === EPHEM_FAMILY);
@@ -416,6 +425,7 @@ const ephemerisSection: EphemerisSection | null = (() => {
       if (row.library === 'siderust' && row.status === 'ok') {
         siderust = { mean: row.mean, p50: row.p50, p99: row.p99, max: row.max, rms: row.rms,
                      ns_per_op: row.ns_per_op, perf_cv_pct: row.perf_cv_pct,
+                     perf_valid: row.perf_valid, perf_warnings: row.perf_warnings,
                      model_source: row.model_source ?? null };
         break;
       }
@@ -769,7 +779,7 @@ const ephemerisSection: EphemerisSection | null = (() => {
                                   <td class="py-2 pr-3 text-right tabular-nums">{s ? fmtNumber(s.max) : '—'}</td>
                                   <td class="py-2 pr-3 text-right tabular-nums">{s ? fmtNumber(s.mean) : '—'}</td>
                                   <td class="py-2 pr-3 text-right tabular-nums">{s ? fmtNumber(s.rms) : '—'}</td>
-                                  <td class="py-2 pr-3 text-right tabular-nums">{s ? fmtNs(s.ns_per_op) : '—'}</td>
+                                  <td class="py-2 pr-3 text-right tabular-nums" title={s ? perfWarningTitle(s) : undefined}>{s && s.perf_valid ? fmtNs(s.ns_per_op) : '—'}</td>
                                   <td class="py-2 pl-3 text-right tabular-nums">{s?.perf_cv_pct != null ? `${s.perf_cv_pct.toFixed(1)}%` : '—'}</td>
                                 </tr>
                               );
@@ -849,7 +859,7 @@ const ephemerisSection: EphemerisSection | null = (() => {
                                       <td class="py-2 pr-3 text-right tabular-nums">{fmtNumber(row.max)}</td>
                                       <td class="py-2 pr-3 text-right tabular-nums">{fmtNumber(row.mean)}</td>
                                       <td class="py-2 pr-3 text-right tabular-nums">{fmtNumber(row.rms)}</td>
-                                      <td class="py-2 pr-3 text-right tabular-nums">{fmtNs(row.ns_per_op)}</td>
+                                      <td class="py-2 pr-3 text-right tabular-nums" title={perfWarningTitle(row)}>{row.perf_valid ? fmtNs(row.ns_per_op) : '—'}</td>
                                       <td class="py-2 pl-3 text-right tabular-nums">{row.perf_cv_pct != null ? `${row.perf_cv_pct.toFixed(1)}%` : '—'}</td>
                                     </tr>
                                   );
