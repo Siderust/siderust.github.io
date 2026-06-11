@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-06T21:49:59.823Z",
+  "generatedAt": "2026-06-11T06:58:07.144Z",
   "sources": {
     "crates": "https://crates.io/api/v1/crates/{crate}"
   },
@@ -10,7 +10,7 @@
       "url": "https://crates.io/crates/affn"
     },
     "cheby": {
-      "version": "0.3.0",
+      "version": "0.4.0",
       "source": "crates.io",
       "url": "https://crates.io/crates/cheby"
     },
