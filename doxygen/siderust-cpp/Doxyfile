@@ -1,6 +1,6 @@
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "siderust-cpp"
-PROJECT_NUMBER         = "0.7.0"
+PROJECT_NUMBER         = "0.8.0"
 PROJECT_BRIEF          = "Header-only C++ wrapper for siderust"
 PROJECT_LOGO           = "/home/valles/workspace/siderust.github.io/public/logo.webp"
 OUTPUT_DIRECTORY       = "/home/valles/workspace/siderust.github.io/doxygen/siderust-cpp"
