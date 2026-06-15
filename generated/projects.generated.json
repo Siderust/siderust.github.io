@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-11T06:58:07.144Z",
+  "generatedAt": "2026-06-15T09:41:46.419Z",
   "sources": {
     "crates": "https://crates.io/api/v1/crates/{crate}"
   },
@@ -20,7 +20,7 @@
       "url": "https://crates.io/crates/qtty"
     },
     "siderust": {
-      "version": "0.9.1",
+      "version": "0.10.0",
       "source": "crates.io",
       "url": "https://crates.io/crates/siderust"
     },
