@@ -55,3 +55,6 @@
 [submodule "siderust-profile"]
 	path = siderust-profile
 	url = git@github.com:Siderust/.github.git
+[submodule "products/rust/affn"]
+	path = products/rust/affn
+	url = git@github.com:Siderust/affn
