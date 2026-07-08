@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-06-15T09:41:46.419Z",
+  "generatedAt": "2026-07-08T07:46:16.917Z",
   "sources": {
     "crates": "https://crates.io/api/v1/crates/{crate}"
   },
   "crates": {
     "affn": {
-      "version": "0.7.3",
+      "version": "0.8.0",
       "source": "crates.io",
       "url": "https://crates.io/crates/affn"
     },
@@ -20,12 +20,12 @@
       "url": "https://crates.io/crates/qtty"
     },
     "siderust": {
-      "version": "0.10.0",
+      "version": "0.11.0",
       "source": "crates.io",
       "url": "https://crates.io/crates/siderust"
     },
     "tempoch": {
-      "version": "0.6.4",
+      "version": "0.6.5",
       "source": "crates.io",
       "url": "https://crates.io/crates/tempoch"
     }
