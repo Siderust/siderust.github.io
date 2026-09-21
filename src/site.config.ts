@@ -93,8 +93,8 @@ const siteConfig: SiteConfig = {
   tagline: 'Precision astronomy & orbit analysis libraries for embedded and research systems',
   description: 'Siderust builds mission-critical astronomical computation and physical modeling libraries in pure Rust. From embedded spacecraft flight software to research-grade pipelines, validated against authoritative ephemerides, zero unsafe code, zero hidden allocations. ',
   siteUrl: 'https://siderust.org',
-  ogImage: '/og-image.svg',
-  logo: '/logo.webp',
+  ogImage: '/siderust-logo.webp',
+  logo: '/siderust-icon.webp',
   
   mission: 'We build astronomy libraries for people who need trustworthy results, from embedded systems to research tools. The goal is simple: make the math explicit, validate it against solid references, and keep the code practical to use.',
   
