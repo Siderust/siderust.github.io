@@ -86,7 +86,7 @@ function findLatestPackageFile(
 }
 
 // Fetch detailed metadata including README
-const project = await getRepoMetadata(slug, true);
+const project = await getRepoMetadata(slug, true, locale);
 
 const displayName = normalizeText(project.displayName);
 const description = normalizeText(project.description);
@@ -540,7 +540,7 @@ if (packageName) {
         </div>
         <div class="grid md:grid-cols-2 gap-6">
           {otherProjects.map(async (p) => {
-            const metadata = await getRepoMetadata(p.repo);
+            const metadata = await getRepoMetadata(p.repo, false, locale);
             return (
               <a
                 href={localePath(locale, `/projects/${p.repo}`)}
@@ -552,7 +552,7 @@ if (packageName) {
                 <div class="flex-1 min-w-0">
                   <h3 class="font-semibold text-gray-900 dark:text-white">{normalizeText(p.name || p.repo)}</h3>
                   <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                    {normalizeText(p.description || metadata.description)}
+                    {normalizeText(metadata.description)}
                   </p>
                 </div>
                 <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
