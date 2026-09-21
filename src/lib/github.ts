@@ -347,7 +347,8 @@ function determineStatus(
 /**
  * Checks if docs.rs documentation exists for a crate
  */
-function getDocsRsUrl(repo: string, configUrl?: string): string | null {
+function getDocsRsUrl(repo: string, configUrl?: string | null): string | null {
+  if (configUrl === null) return null;
   if (configUrl) return configUrl;
   // Assume Rust crates have docs.rs pages
   return `https://docs.rs/${repo}`;
@@ -356,7 +357,8 @@ function getDocsRsUrl(repo: string, configUrl?: string): string | null {
 /**
  * Gets crates.io URL for a crate
  */
-function getCratesIoUrl(repo: string, configUrl?: string): string | null {
+function getCratesIoUrl(repo: string, configUrl?: string | null): string | null {
+  if (configUrl === null) return null;
   if (configUrl) return configUrl;
   // Assume crate name matches repo name
   return `https://crates.io/crates/${repo}`;
@@ -396,6 +398,12 @@ export async function getRepoMetadata(
 
   const status = determineStatus(repoData, releaseData, projectConfig?.status);
   const isRustProject = repoData?.language === 'Rust' || projectConfig?.tags?.includes('rust');
+  const docsUrl = isRustProject
+    ? getDocsRsUrl(repo, projectConfig?.docsUrl)
+    : projectConfig?.docsUrl || null;
+  const crateUrl = isRustProject
+    ? getCratesIoUrl(repo, projectConfig?.crateUrl)
+    : projectConfig?.crateUrl || null;
 
   return {
     // Basic info
@@ -424,8 +432,8 @@ export async function getRepoMetadata(
     releaseDate: releaseData?.published_at || null,
 
     // External links (only for Rust projects)
-    docsUrl: isRustProject ? getDocsRsUrl(repo, projectConfig?.docsUrl) : projectConfig?.docsUrl || null,
-    crateUrl: isRustProject ? getCratesIoUrl(repo, projectConfig?.crateUrl) : projectConfig?.crateUrl || null,
+    docsUrl,
+    crateUrl,
 
     // Status
     status,
@@ -440,7 +448,7 @@ export async function getRepoMetadata(
     readme: readmeContent,
 
     // Flags
-    hasDocs: isRustProject || !!projectConfig?.docsUrl,
+    hasDocs: !!docsUrl,
     hasReleases: !!releaseData,
     isArchived: repoData?.archived ?? false,
   };
