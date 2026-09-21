@@ -20,10 +20,10 @@ export interface ProjectConfig {
   featured?: boolean;
   /** Key features to highlight */
   features?: string[];
-  /** Custom docs URL (if different from docs.rs) */
-  docsUrl?: string;
-  /** Custom crates.io URL (if different from standard) */
-  crateUrl?: string;
+  /** Custom docs URL (if different from docs.rs); null disables the docs link */
+  docsUrl?: string | null;
+  /** Custom crates.io URL (if different from standard); null marks an unpublished crate */
+  crateUrl?: string | null;
   /** Short "why it exists" explanation */
   purpose?: string;
   /** Getting started code snippet or instructions */
@@ -135,6 +135,32 @@ let jd = JulianDate::from_utc(Utc::now());
 let mars = Mars::vsop87e(jd);
 println!("{}", mars.position);`,
       tags: ['astronomy', 'ephemeris', 'celestial-mechanics', 'space', 'rust'],
+    },
+    {
+      repo: 'siderust-pod',
+      name: 'siderust-pod',
+      language: 'Rust',
+      description: 'Precise Orbit Determination and orbit-analysis toolkit in Rust.',
+      status: 'experimental',
+      featured: true,
+      purpose: 'siderust-pod is the precise-orbit-determination layer of the Siderust ecosystem. It combines propagation, observation modelling, estimation, orbit products, and quality control while reusing the released Siderust crates for foundational mechanics, units, time scales, and reference frames.',
+      features: [
+        'Orbit propagation with two-body, J2, third-body gravity, SRP, and drag models',
+        'GNSS code/carrier and SLR observation-model building blocks',
+        'Weighted least-squares, Gauss-Newton, and EKF estimation components',
+        'SP3, RINEX, ANTEX, EOP, CRD, CPF, and CCSDS OEM interoperability',
+        'Synthetic end-to-end POD pipeline for development and validation',
+      ],
+      docsUrl: 'https://github.com/Siderust/siderust-pod#readme',
+      crateUrl: null,
+      gettingStarted: `git clone https://github.com/Siderust/siderust-pod.git
+cd siderust-pod
+cargo test
+
+# Validate and run the synthetic POD pipeline
+cargo run --bin siderust-pod -- validate-config examples/configs/leo_gnss_mvp1.yaml
+cargo run --bin siderust-pod -- run examples/configs/leo_gnss_mvp1.yaml`,
+      tags: ['orbit-determination', 'astrodynamics', 'satellite', 'gnss', 'sgp4', 'spice', 'rust'],
     },
     {
       repo: 'qtty',
