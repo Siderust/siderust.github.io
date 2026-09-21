@@ -1,9 +1,10 @@
 name: Deploy to GitHub Pages
 
 on:
-  # Trigger on pushes to main branch
+  # Validate every pull request and deploy pushes to main.
   push:
     branches: [main]
+  pull_request:
   # Allow manual trigger
   workflow_dispatch:
 
@@ -92,6 +93,7 @@ jobs:
 
   deploy:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
