@@ -16,7 +16,7 @@ export function getStaticPaths() {
 const locale = Astro.params.locale as Locale;
 
 // Fetch metadata for all projects
-const allProjects = await getAllRepoMetadata();
+const allProjects = await getAllRepoMetadata(false, locale);
 
 // Get unique languages for filtering
 const languages = [...new Set(allProjects.map(p => p.language).filter(Boolean))] as string[];

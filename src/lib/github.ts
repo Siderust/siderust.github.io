@@ -385,9 +385,14 @@ export function getLanguageColor(language: string | null): string {
  */
 export async function getRepoMetadata(
   repo: string,
-  fetchReadmeContent = false
+  fetchReadmeContent = false,
+  locale?: Locale
 ): Promise<RepoMetadata> {
   const projectConfig = siteConfig.projects.find(p => p.repo === repo);
+  const localizedConfig = locale ? projectConfig?.localized?.[locale] : undefined;
+  const effectiveConfig = projectConfig && localizedConfig
+    ? { ...projectConfig, ...localizedConfig }
+    : projectConfig;
   
   // Fetch GitHub data in parallel
   const [repoData, releaseData, readmeContent] = await Promise.all([
@@ -396,20 +401,20 @@ export async function getRepoMetadata(
     fetchReadmeContent ? fetchReadme(repo) : Promise.resolve(null),
   ]);
 
-  const status = determineStatus(repoData, releaseData, projectConfig?.status);
-  const isRustProject = repoData?.language === 'Rust' || projectConfig?.tags?.includes('rust');
+  const status = determineStatus(repoData, releaseData, effectiveConfig?.status);
+  const isRustProject = repoData?.language === 'Rust' || effectiveConfig?.tags?.includes('rust');
   const docsUrl = isRustProject
-    ? getDocsRsUrl(repo, projectConfig?.docsUrl)
-    : projectConfig?.docsUrl || null;
+    ? getDocsRsUrl(repo, effectiveConfig?.docsUrl)
+    : effectiveConfig?.docsUrl || null;
   const crateUrl = isRustProject
-    ? getCratesIoUrl(repo, projectConfig?.crateUrl)
-    : projectConfig?.crateUrl || null;
+    ? getCratesIoUrl(repo, effectiveConfig?.crateUrl)
+    : effectiveConfig?.crateUrl || null;
 
   return {
     // Basic info
     name: repo,
-    displayName: projectConfig?.name || repo,
-    description: projectConfig?.description || repoData?.description || 'A Siderust project',
+    displayName: effectiveConfig?.name || repo,
+    description: effectiveConfig?.description || repoData?.description || 'A Siderust project',
     repoUrl: repoData?.html_url || `${siteConfig.orgUrl}/${repo}`,
 
     // Stats
@@ -418,8 +423,8 @@ export async function getRepoMetadata(
     openIssues: repoData?.open_issues_count ?? 0,
 
     // Metadata
-    language: projectConfig?.language || repoData?.language || null,
-    topics: repoData?.topics || projectConfig?.tags || [],
+    language: effectiveConfig?.language || repoData?.language || null,
+    topics: repoData?.topics || effectiveConfig?.tags || [],
     license: repoData?.license?.spdx_id || null,
 
     // Timestamps
@@ -439,10 +444,10 @@ export async function getRepoMetadata(
     status,
 
     // Config data
-    features: projectConfig?.features || [],
-    purpose: projectConfig?.purpose || null,
-    gettingStarted: getProjectGettingStarted(projectConfig),
-    tags: projectConfig?.tags || repoData?.topics || [],
+    features: effectiveConfig?.features || [],
+    purpose: effectiveConfig?.purpose || null,
+    gettingStarted: getProjectGettingStarted(effectiveConfig),
+    tags: effectiveConfig?.tags || repoData?.topics || [],
 
     // README
     readme: readmeContent,
@@ -457,10 +462,13 @@ export async function getRepoMetadata(
 /**
  * Fetches metadata for all configured projects
  */
-export async function getAllRepoMetadata(fetchReadme = false): Promise<RepoMetadata[]> {
+export async function getAllRepoMetadata(
+  fetchReadme = false,
+  locale?: Locale
+): Promise<RepoMetadata[]> {
   const repos = siteConfig.projects.map(p => p.repo);
   const metadata = await Promise.all(
-    repos.map(repo => getRepoMetadata(repo, fetchReadme))
+    repos.map(repo => getRepoMetadata(repo, fetchReadme, locale))
   );
   return metadata;
 }
