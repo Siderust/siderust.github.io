@@ -17,7 +17,7 @@ export function getStaticPaths() {
 const locale = Astro.params.locale as Locale;
 
 // Fetch metadata for all projects
-const allMetadata = await getAllRepoMetadata();
+const allMetadata = await getAllRepoMetadata(false, locale);
 
 // Get featured projects
 const featuredRepos = getFeaturedProjects().map(p => p.repo);
