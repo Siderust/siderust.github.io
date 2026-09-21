@@ -424,7 +424,7 @@ export async function getRepoMetadata(
 
     // Metadata
     language: effectiveConfig?.language || repoData?.language || null,
-    topics: repoData?.topics || projectConfig?.tags || [],
+    topics: repoData?.topics || effectiveConfig?.tags || [],
     license: repoData?.license?.spdx_id || null,
 
     // Timestamps
