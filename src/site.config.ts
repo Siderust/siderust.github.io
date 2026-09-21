@@ -5,6 +5,13 @@
  * Modify this file to customize organization details, projects, and their metadata.
  */
 
+export interface ProjectLocalizedContent {
+  description?: string;
+  purpose?: string;
+  features?: string[];
+  gettingStarted?: string;
+}
+
 export interface ProjectConfig {
   /** GitHub repository name (e.g., 'siderust') */
   repo: string;
@@ -34,6 +41,8 @@ export interface ProjectConfig {
   tags?: string[];
   /** Package name used to find .deb/.rpm files in apt/ and rpm/ directories */
   packageName?: string;
+  /** Locale-specific project copy. Technical metadata stays shared. */
+  localized?: Partial<Record<'ca' | 'en', ProjectLocalizedContent>>;
 }
 
 export interface SiteConfig {
@@ -161,6 +170,26 @@ cargo test
 cargo run --bin siderust-pod -- validate-config examples/configs/leo_gnss_mvp1.yaml
 cargo run --bin siderust-pod -- run examples/configs/leo_gnss_mvp1.yaml`,
       tags: ['orbit-determination', 'astrodynamics', 'satellite', 'gnss', 'sgp4', 'spice', 'rust'],
+      localized: {
+        ca: {
+          description: 'Eina en Rust per a la determinació precisa d’òrbites i l’anàlisi orbital.',
+          purpose: 'siderust-pod és la capa de determinació precisa d’òrbites de l’ecosistema Siderust. Combina propagació, modelatge d’observacions, estimació, productes orbitals i control de qualitat, reutilitzant els crates publicats de Siderust per a la mecànica fonamental, les unitats, les escales de temps i els marcs de referència.',
+          features: [
+            'Propagació orbital amb models de dos cossos, J2, gravetat de tercers cossos, pressió de radiació solar i arrossegament atmosfèric',
+            'Blocs de modelatge d’observacions GNSS de codi/portadora i SLR',
+            'Components d’estimació per mínims quadrats ponderats, Gauss-Newton i EKF',
+            'Interoperabilitat amb SP3, RINEX, ANTEX, EOP, CRD, CPF i CCSDS OEM',
+            'Pipeline POD sintètic d’extrem a extrem per a desenvolupament i validació',
+          ],
+          gettingStarted: `git clone https://github.com/Siderust/siderust-pod.git
+cd siderust-pod
+cargo test
+
+# Valida i executa el pipeline POD sintètic
+cargo run --bin siderust-pod -- validate-config examples/configs/leo_gnss_mvp1.yaml
+cargo run --bin siderust-pod -- run examples/configs/leo_gnss_mvp1.yaml`,
+        },
+      },
     },
     {
       repo: 'qtty',
