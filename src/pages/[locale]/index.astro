@@ -70,6 +70,14 @@ const sponsorship = siteConfig.sponsorship;
           </a>
         </div>
 
+        <!-- Time-limited technical resource for hackathon participants -->
+        <div class="mt-8 mx-auto max-w-2xl rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/80 dark:bg-brand-950/20 px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+          <span class="font-semibold">{locale === 'en' ? 'Joining Space Apps 2026?' : 'Participes a Space Apps 2026?'}</span>
+          <a href={localePath(locale, '/space-apps-2026')} class="link ml-2">
+            {locale === 'en' ? 'Explore Siderust resources for participants' : 'Descobreix els recursos de Siderust per a participants'} ↗
+          </a>
+        </div>
+
         <!-- Benchmarks link -->
         <p class="mt-5 text-sm text-gray-500 dark:text-gray-500 animate-fade-in animation-delay-300">
           <a href={localePath(locale, '/benchmarks')} class="link inline-flex items-center gap-1">
