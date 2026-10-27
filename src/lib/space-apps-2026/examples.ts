@@ -55,7 +55,7 @@ fn main() {
     println!("Sun altitude: {:.2}°", alt.to::<Degree>().value());
     println!("Sun azimuth:  {:.2}°", az.to::<Degree>().value());
     // Altitude is geometric (no refraction); azimuth is north through east.
-`;
+}`;
 
 export const pythonEarthAltAz = `from siderust import Body, Observer
 
