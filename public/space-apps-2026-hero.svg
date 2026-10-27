@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
+  <title id="title">Lunar geometry illustration</title>
+  <desc id="desc">Schematic of the Moon with a surface observer, local horizon frame, and Sun and Earth directions.</desc>
+  <defs>
+    <radialGradient id="space" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#1e3a5f"/>
+      <stop offset="55%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </radialGradient>
+    <radialGradient id="moonFill" cx="38%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="45%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </radialGradient>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ed7712"/>
+      <stop offset="100%" stop-color="#df614e"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 1 L9 5 L0 9 Z" fill="#fbbf24"/>
+    </marker>
+    <marker id="arrowEarth" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 1 L9 5 L0 9 Z" fill="#38bdf8"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="640" fill="url(#space)"/>
+
+  <!-- faint stars -->
+  <g fill="#e2e8f0" opacity="0.55">
+    <circle cx="70" cy="60" r="1.5"/><circle cx="140" cy="110" r="1"/><circle cx="220" cy="48" r="1.2"/>
+    <circle cx="310" cy="90" r="1"/><circle cx="880" cy="70" r="1.4"/><circle cx="820" cy="130" r="1"/>
+    <circle cx="760" cy="40" r="1.1"/><circle cx="900" cy="200" r="1.3"/><circle cx="60" cy="220" r="1"/>
+    <circle cx="180" cy="280" r="0.9"/><circle cx="840" cy="320" r="1.1"/><circle cx="920" cy="420" r="1"/>
+  </g>
+
+  <!-- orbit arc -->
+  <path d="M120 470 C260 560, 700 560, 860 420" fill="none" stroke="#ed7712" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="6 8"/>
+
+  <!-- Moon disk -->
+  <circle cx="420" cy="330" r="168" fill="url(#moonFill)"/>
+  <circle cx="360" cy="270" r="28" fill="#94a3b8" opacity="0.35"/>
+  <circle cx="470" cy="360" r="42" fill="#64748b" opacity="0.28"/>
+  <circle cx="390" cy="390" r="18" fill="#475569" opacity="0.3"/>
+
+  <!-- latitude / longitude grid (schematic) -->
+  <g fill="none" stroke="#0f172a" stroke-opacity="0.28" stroke-width="1.2">
+    <ellipse cx="420" cy="330" rx="168" ry="55"/>
+    <ellipse cx="420" cy="330" rx="168" ry="110"/>
+    <path d="M420 162 C470 230, 470 430, 420 498"/>
+    <path d="M420 162 C370 230, 370 430, 420 498"/>
+    <path d="M252 330 C330 300, 510 300, 588 330"/>
+  </g>
+
+  <!-- local horizon triad at a mid-latitude site -->
+  <g stroke-linecap="round">
+    <!-- site -->
+    <circle cx="505" cy="245" r="6" fill="url(#brand)"/>
+    <!-- up -->
+    <line x1="505" y1="245" x2="560" y2="175" stroke="#ed7712" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <!-- east -->
+    <line x1="505" y1="245" x2="585" y2="265" stroke="#f97316" stroke-width="2" opacity="0.85"/>
+    <!-- north -->
+    <line x1="505" y1="245" x2="470" y2="195" stroke="#fb923c" stroke-width="2" opacity="0.75"/>
+  </g>
+
+  <!-- Sun -->
+  <g>
+    <circle cx="780" cy="150" r="28" fill="#fbbf24"/>
+    <circle cx="780" cy="150" r="42" fill="#fbbf24" opacity="0.18"/>
+    <line x1="520" y1="235" x2="745" y2="165" stroke="#fbbf24" stroke-width="2.2" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- Earth -->
+  <g>
+    <circle cx="780" cy="470" r="22" fill="#38bdf8"/>
+    <circle cx="772" cy="464" r="8" fill="#22c55e" opacity="0.55"/>
+    <line x1="515" y1="255" x2="750" y2="450" stroke="#38bdf8" stroke-width="2.2" marker-end="url(#arrowEarth)"/>
+  </g>
+
+  <!-- labels -->
+  <g font-family="Inter, system-ui, sans-serif" fill="#e2e8f0">
+    <text x="56" y="560" font-size="18" font-weight="600" fill="#ed7712">Siderust</text>
+    <text x="56" y="586" font-size="13" fill="#94a3b8">Selenocentric geometry / local ENU / ephemerides</text>
+    <text x="548" y="168" font-size="13" fill="#fdba74">local up</text>
+    <text x="800" y="120" font-size="14" font-weight="600" fill="#fde68a">Sun</text>
+    <text x="800" y="510" font-size="14" font-weight="600" fill="#7dd3fc">Earth</text>
+    <text x="330" y="520" font-size="14" font-weight="600" fill="#cbd5e1">Moon</text>
+  </g>
+</svg>

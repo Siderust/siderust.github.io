@@ -71,11 +71,18 @@ const sponsorship = siteConfig.sponsorship;
         </div>
 
         <!-- Time-limited technical resource for hackathon participants -->
-        <div class="mt-8 mx-auto max-w-2xl rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/80 dark:bg-brand-950/20 px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-          <span class="font-semibold">{locale === 'en' ? 'Joining Space Apps 2026?' : 'Participes a Space Apps 2026?'}</span>
-          <a href={localePath(locale, '/space-apps-2026')} class="link ml-2">
-            {locale === 'en' ? 'Explore Siderust resources for participants' : 'Descobreix els recursos de Siderust per a participants'} ↗
-          </a>
+        <div class="mt-8 mx-auto max-w-2xl rounded-xl border border-brand-200 dark:border-brand-900/50 bg-brand-50/80 dark:bg-brand-950/20 px-5 py-4 text-sm text-gray-700 dark:text-gray-300 text-left sm:text-center">
+          <p class="font-semibold text-gray-900 dark:text-white">
+            {locale === 'en' ? 'Joining NASA Space Apps 2026 (Nov 14–15)?' : 'Participes al NASA Space Apps 2026 (14–15 nov)?'}
+          </p>
+          <p class="mt-1 text-gray-600 dark:text-gray-400">
+            {locale === 'en'
+              ? 'Open-source astronomy tools for lunar and mission-geometry challenges.'
+              : 'Eines obertes d’astronomia per als reptes lunars i de geometria de missions.'}
+            <a href={localePath(locale, '/space-apps-2026')} class="link ml-1">
+              {locale === 'en' ? 'Participant guide' : 'Guia per a participants'} ↗
+            </a>
+          </p>
         </div>
 
         <!-- Benchmarks link -->
