@@ -80,11 +80,13 @@ use siderust::coordinates::centers::Selenocentric;
 use siderust::coordinates::frames::EclipticMeanJ2000;
 use siderust::coordinates::transform::TransformCenter;
 use siderust::qtty::{AstronomicalUnit, Kilometer};
-use siderust::time::{JulianDate, ModifiedJulianDate};
+use siderust::time::{JulianDate, JD, TT, Time, UTC};
 
 fn main() {
-    let mjd = ModifiedJulianDate::new(60_000.5);
-    let jd = JulianDate::new(mjd.value() + 2_400_000.5);
+    // Astronomical Julian date (TT) for the current UTC instant.
+    let jd: JulianDate = Time::<UTC>::from_chrono(
+        siderust::chrono::Utc::now(),
+    ).to::<TT>().to::<JD>();
 
     // Target positions referred to the Moon's centre of mass.
     let sun: Position<Selenocentric, EclipticMeanJ2000, AstronomicalUnit> =
@@ -94,7 +96,7 @@ fn main() {
 
     println!("Sun–Moon range:   {:.0} km", sun.distance().to::<Kilometer>().value());
     println!("Earth–Moon range: {:.0} km", earth.distance().to::<Kilometer>().value());
-    // Expected ≈ Earth–Moon 385046 km (geometric, no topographic horizon)
+    // Geometric distance; this is NOT a lunar surface altitude/azimuth.
 }`;
 
 /** Mission-design style relative distance (Rust). */
