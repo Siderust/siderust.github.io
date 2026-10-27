@@ -56,7 +56,9 @@ Full lunar-surface Alt/Az (selenographic site → local ENU → geometric altitu
 
 Recommended upstream work (separate repos, not the website):
 
-1. **siderust:** lunar-site observer type + horizon projection using Moon principal axes / selenocentric positions; pole azimuth convention; geometric vs topographic altitude documentation; validation against an independent lunar ephemeris / orientation reference.
-2. **siderust-py:** expose selenocentric helpers and lunar Alt/Az once the Rust API is stable.
+1. **siderust:** lunar-site observer type + horizon projection using Moon principal axes / selenocentric positions; pole azimuth convention; geometric vs topographic altitude documentation; validation against an independent lunar ephemeris / orientation reference.  
+   Tracking: https://github.com/Siderust/siderust/issues/121
+2. **siderust-py:** expose selenocentric helpers and lunar Alt/Az once the Rust API is stable.  
+   Tracking: https://github.com/Siderust/siderust-py/issues/17
 
 Until then, the landing page advertises only verified capabilities and shows working Earth Alt/Az plus selenocentric (Rust) / geocentric Moon (Python) examples.
