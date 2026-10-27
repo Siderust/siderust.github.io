@@ -230,9 +230,10 @@ const eventUrl = 'https://www.spaceappschallenge.org/2026/';
         <div class="mt-4 lang-panel hidden" data-lang-panel="python">
           <CodeSnippet code={pythonEarthAltAz} lang="python" copyLabel={copy.copyLabel} />
         </div>
-        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400 font-mono">
-          {copy.expected}: altitude {REFERENCE.sunAltDeg}°, azimuth {REFERENCE.sunAzDeg}°
-          ({REFERENCE.site}, MJD {REFERENCE.mjd})
+        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+          {locale === 'en'
+            ? 'Change longitude, latitude, or height to use your own location. Results vary with time and site.'
+            : 'Canvia la longitud, la latitud o l’altura per fer servir el teu lloc. Els resultats varien segons l’hora i la ubicació.'}
         </p>
       </div>
 
