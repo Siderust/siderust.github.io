@@ -29,32 +29,45 @@ export const pythonInstall = `pip install siderust==${VERSIONS.python}`;
 
 /** Earth observer Alt/Az — works in published Rust and Python APIs. */
 export const rustEarthAltAz = `use siderust::bodies::solar_system::Sun;
-use siderust::catalogs::observatories::ROQUE_DE_LOS_MUCHACHOS;
+use siderust::coordinates::centers::Geodetic;
+use siderust::coordinates::frames::ECEF;
 use siderust::event::altitude::AltitudeProvider;
 use siderust::event::azimuth::AzimuthProvider;
-use siderust::qtty::Degree;
-use siderust::time::ModifiedJulianDate;
+use siderust::qtty::{Degree, Degrees, Meters};
+use siderust::time::{ModifiedJulianDate, MJD, TT, Time, UTC};
 
 fn main() {
-    let site = ROQUE_DE_LOS_MUCHACHOS.geodetic();
-    let mjd = ModifiedJulianDate::new(60_000.5); // ~2023-02-25 12:00
+    // Your own location: longitude (east positive), latitude (north positive), height.
+    let site = Geodetic::<ECEF>::new(
+        Degrees::new(-6.14),  // longitude: Jerez de la Frontera
+        Degrees::new(36.68),  // latitude
+        Meters::new(50.0),   // height above WGS84 ellipsoid
+    );
+
+    // Convert the current UTC instant to the TT timescale used by Siderust.
+    let mjd: ModifiedJulianDate = Time::<UTC>::from_chrono(
+        siderust::chrono::Utc::now(),
+    ).to::<TT>().to::<MJD>();
 
     let alt = Sun.altitude_at(&site, mjd);
     let az = Sun.azimuth_at(&site, mjd);
 
-    println!("Sun altitude: {:.3}°", alt.to::<Degree>().value());
-    println!("Sun azimuth:  {:.3}°", az.to::<Degree>().value());
-    // Expected ≈ altitude 46.868°, azimuth 148.121°
-}`;
+    println!("Sun altitude: {:.2}°", alt.to::<Degree>().value());
+    println!("Sun azimuth:  {:.2}°", az.to::<Degree>().value());
+    // Altitude is geometric (no refraction); azimuth is north through east.
+`;
 
 export const pythonEarthAltAz = `from siderust import Body, Observer
 
-site = Observer.roque_de_los_muchachos()
-mjd = 60000.5  # ~2023-02-25 12:00
+# Custom Earth location: longitude east-positive, latitude north-positive.
+site = Observer(lon_deg=-6.14, lat_deg=36.68, height_m=50.0)
 
-print(f"Sun altitude: {Body.Sun.altitude_at(site, mjd):.3f}°")
-print(f"Sun azimuth:  {Body.Sun.azimuth_at(site, mjd):.3f}°")
-# Expected ≈ altitude 46.868°, azimuth 148.121°`;
+# A fixed epoch makes the output reproducible (MJD, TT).
+mjd = 60000.5
+
+print(f"Sun altitude: {Body.Sun.altitude_at(site, mjd):.2f}°")
+print(f"Sun azimuth:  {Body.Sun.azimuth_at(site, mjd):.2f}°")
+# Altitude is geometric; azimuth is measured north through east.`;
 
 /**
  * Lunar geometry building block available today:
