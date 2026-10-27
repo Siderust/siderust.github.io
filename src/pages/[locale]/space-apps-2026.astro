@@ -1,0 +1,176 @@
+---
+/**
+ * Space Apps 2026 outreach landing page.
+ *
+ * This is an independent, community-provided resource, not an official NASA
+ * Space Apps collaboration. Keep claims aligned with published project APIs.
+ */
+import Layout from '../../layouts/Layout.astro';
+import { getLocaleStaticPaths, type Locale } from '../../i18n/index';
+
+export function getStaticPaths() {
+  return getLocaleStaticPaths();
+}
+
+const locale = Astro.params.locale as Locale;
+
+const copy = {
+  en: {
+    title: 'Siderust for Space Apps 2026',
+    seo: 'Open-source Rust and Python astronomy tools for NASA Space Apps Challenge 2026 participants.',
+    eyebrow: 'Community resource · Space Apps 2026',
+    headline: 'Build your space project on reliable astronomy tools.',
+    intro: 'Siderust is an independent, open-source astronomy and orbital-mechanics project. Use its Rust library or Python bindings to explore ephemerides, coordinates, time systems and mission geometry without starting from scratch.',
+    rust: 'Get started with Rust',
+    python: 'Get started with Python',
+    explore: 'Explore the source code',
+    relevance: 'Where it could help',
+    challenges: [
+      { name: 'CLPS Lunar Mission Browser', detail: 'Work with lunar reference frames, celestial positions and time-dependent geometry. Complete Sun/Earth visibility from a specific lunar site, including terrain obstructions, requires additional modeling and validation.' },
+      { name: 'Space Mission Design Game', detail: 'Build educational mission-design simulations using orbital mechanics, reference-frame conversions and ephemerides. Spacecraft power, mass, cost and communications budgets remain application-level work.' },
+      { name: 'Other astronomy and exploration projects', detail: 'Use observation planning, positions of Solar System bodies and typed coordinate transformations as building blocks for visualizations or scientific prototypes.' },
+    ],
+    capabilities: 'What the project provides',
+    features: [
+      { name: 'Ephemerides', detail: 'Planetary and lunar position models, with documented accuracy and limitations.' },
+      { name: 'Type-safe coordinates', detail: 'Explicit reference centers, frames and physical units to reduce accidental mismatches.' },
+      { name: 'Time and events', detail: 'Astronomical time handling and event-search tools for observation problems.' },
+      { name: 'Rust + Python', detail: 'A native Rust crate and a Python package for different development workflows.' },
+    ],
+    quickstart: 'Try it in a minute',
+    quickstartIntro: 'Install one of the packages to begin. The Python example below is for an Earth-based observer; it is not a lunar landing-site calculation.',
+    rustCode: 'cargo add siderust',
+    pythonCode: 'pip install siderust',
+    docsRust: 'Rust repository and examples',
+    docsPython: 'Python documentation and examples',
+    demo: 'Explore the web demo',
+    help: 'Questions during the hackathon?',
+    helpText: 'For installation questions or astronomy integration guidance, contact the Siderust maintainers. Support is offered on a best-effort basis, not as a staffed event service.',
+    contact: 'Email help@siderust.org',
+    licenseLabel: 'License and attribution',
+    licenseText: 'Siderust is licensed under AGPL-3.0-only. Check your project’s distribution and source-code obligations before integrating it, and cite third-party datasets and models appropriately.',
+    disclaimer: 'Siderust is an independent open-source project. It is not an official NASA Space Apps resource, Global Collaborator, NASA product or NASA endorsement.',
+    challengeLink: 'Browse the official 2026 challenges',
+  },
+  ca: {
+    title: 'Siderust per a Space Apps 2026',
+    seo: 'Eines obertes d’astronomia en Rust i Python per als participants del NASA Space Apps Challenge 2026.',
+    eyebrow: 'Recurs de la comunitat · Space Apps 2026',
+    headline: 'Construeix el teu projecte espacial amb eines astronòmiques fiables.',
+    intro: 'Siderust és un projecte independent i de codi obert d’astronomia i mecànica orbital. Pots utilitzar la biblioteca Rust o els enllaços Python per treballar amb efemèrides, coordenades, sistemes de temps i geometria de missions.',
+    rust: 'Comença amb Rust',
+    python: 'Comença amb Python',
+    explore: 'Explora el codi font',
+    relevance: 'On pot ajudar',
+    challenges: [
+      { name: 'CLPS Lunar Mission Browser', detail: 'Treballa amb sistemes de referència lunars, posicions celestes i geometria dependent del temps. La visibilitat completa del Sol i la Terra des d’un lloc lunar concret, amb les obstruccions del terreny, exigeix models i validacions addicionals.' },
+      { name: 'Space Mission Design Game', detail: 'Crea simulacions educatives de missions amb mecànica orbital, conversions entre sistemes de referència i efemèrides. Els pressupostos de potència, massa, costos i comunicacions requereixen treball addicional.' },
+      { name: 'Altres projectes d’astronomia i exploració', detail: 'Aprofita eines de planificació d’observacions, posicions de cossos del Sistema Solar i transformacions tipades de coordenades per crear visualitzacions i prototips científics.' },
+    ],
+    capabilities: 'Què ofereix el projecte',
+    features: [
+      { name: 'Efemèrides', detail: 'Models de posició planetària i lunar amb precisió i limitacions documentades.' },
+      { name: 'Coordenades tipades', detail: 'Centres de referència, sistemes i unitats físiques explícits per evitar incompatibilitats.' },
+      { name: 'Temps i esdeveniments', detail: 'Tractament del temps astronòmic i eines de cerca d’esdeveniments observacionals.' },
+      { name: 'Rust i Python', detail: 'Una biblioteca Rust nativa i un paquet Python per a fluxos de treball diferents.' },
+    ],
+    quickstart: 'Prova-ho en un minut',
+    quickstartIntro: 'Instal·la un dels paquets per començar. L’exemple Python és per a un observador terrestre; no és un càlcul d’aterratge lunar.',
+    rustCode: 'cargo add siderust',
+    pythonCode: 'pip install siderust',
+    docsRust: 'Repositori Rust i exemples',
+    docsPython: 'Documentació Python i exemples',
+    demo: 'Explora la demostració web',
+    help: 'Tens preguntes durant la hackató?',
+    helpText: 'Per resoldre dubtes d’instal·lació o integració astronòmica, contacta amb els mantenidors de Siderust. El suport es proporciona segons disponibilitat.',
+    contact: 'Escriu a help@siderust.org',
+    licenseLabel: 'Llicència i atribució',
+    licenseText: 'Siderust es distribueix sota AGPL-3.0-only. Revisa les obligacions de distribució i disponibilitat del codi font abans d’integrar-lo, i cita correctament els models i conjunts de dades de tercers.',
+    disclaimer: 'Siderust és un projecte independent de codi obert. No és un recurs oficial de NASA Space Apps, ni un Global Collaborator, producte o projecte avalat per la NASA.',
+    challengeLink: 'Consulta els reptes oficials del 2026',
+  },
+}[locale];
+---
+
+<Layout locale={locale} title={copy.title} description={copy.seo}>
+  <section class="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 py-16 md:py-24">
+    <div class="container-custom max-w-5xl">
+      <div class="max-w-3xl">
+        <p class="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300">{copy.eyebrow}</p>
+        <h1 class="mt-6 text-4xl md:text-6xl font-bold tracking-tight text-gray-950 dark:text-white">{copy.headline}</h1>
+        <p class="mt-6 text-lg md:text-xl leading-relaxed text-gray-600 dark:text-gray-300">{copy.intro}</p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a class="btn-primary" href="#quickstart">{copy.rust}</a>
+          <a class="btn-secondary" href="#quickstart">{copy.python}</a>
+          <a class="btn-secondary" href="https://github.com/Siderust/siderust" target="_blank" rel="noopener noreferrer">{copy.explore}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-14 md:py-20">
+    <div class="container-custom">
+      <h2 class="section-heading">{copy.relevance}</h2>
+      <div class="mt-8 grid gap-5 lg:grid-cols-3">
+        {copy.challenges.map((item) => (
+          <article class="card p-6">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">{item.name}</h3>
+            <p class="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed">{item.detail}</p>
+          </article>
+        ))}
+      </div>
+      <p class="mt-6 text-sm"><a class="link" href="https://www.spaceappschallenge.org/2026/challenges/" target="_blank" rel="noopener noreferrer">{copy.challengeLink} ↗</a></p>
+    </div>
+  </section>
+
+  <section class="py-14 md:py-20 bg-gray-50 dark:bg-gray-900/30">
+    <div class="container-custom">
+      <h2 class="section-heading">{copy.capabilities}</h2>
+      <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {copy.features.map((feature) => (
+          <article class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{feature.name}</h3>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{feature.detail}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="quickstart" class="py-14 md:py-20 scroll-mt-24">
+    <div class="container-custom max-w-5xl">
+      <h2 class="section-heading">{copy.quickstart}</h2>
+      <p class="mt-4 text-gray-600 dark:text-gray-400 max-w-3xl">{copy.quickstartIntro}</p>
+      <div class="mt-8 grid gap-6 md:grid-cols-2">
+        <div class="card p-6">
+          <h3 class="text-xl font-semibold mb-3">Rust</h3>
+          <pre class="code-block"><code>{copy.rustCode}</code></pre>
+          <p class="mt-4"><a class="link" href="https://github.com/Siderust/siderust#readme" target="_blank" rel="noopener noreferrer">{copy.docsRust} ↗</a></p>
+        </div>
+        <div class="card p-6">
+          <h3 class="text-xl font-semibold mb-3">Python</h3>
+          <pre class="code-block"><code>{copy.pythonCode}</code></pre>
+          <p class="mt-4"><a class="link" href="https://github.com/Siderust/siderust-py#readme" target="_blank" rel="noopener noreferrer">{copy.docsPython} ↗</a></p>
+        </div>
+      </div>
+      <div class="mt-6">
+        <a class="link" href={`/${locale}/demo`}>{copy.demo} ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-14 md:py-20 bg-gray-50 dark:bg-gray-900/30">
+    <div class="container-custom max-w-5xl">
+      <h2 class="section-heading">{copy.help}</h2>
+      <p class="mt-4 max-w-3xl text-gray-600 dark:text-gray-400 leading-relaxed">{copy.helpText}</p>
+      <a class="btn-primary mt-6" href="mailto:help@siderust.org">{copy.contact}</a>
+      <div class="mt-10 grid gap-4 max-w-3xl">
+        <div>
+          <h3 class="font-semibold text-gray-900 dark:text-white">{copy.licenseLabel}</h3>
+          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{copy.licenseText} <a href="https://github.com/Siderust/siderust/blob/main/LICENSE" class="link" target="_blank" rel="noopener noreferrer">LICENSE ↗</a></p>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800 pt-5">{copy.disclaimer}</p>
+      </div>
+    </div>
+  </section>
+</Layout>
