@@ -1,8 +1,10 @@
 /**
- * Verified Space Apps 2026 code samples.
+ * Space Apps 2026 introductory code samples.
  *
- * Reference epoch: MJD 60000.5 (JD 2460001.0), Roque de los Muchachos.
- * Values checked against siderust 0.15.1 and siderust (PyPI) 0.6.0.
+ * Earth examples use custom observing sites. Rust samples convert UTC "now"
+ * to the TT time scale; deterministic Python/mission examples use JD 2460001.0.
+ * Update versions and verify every snippet against the eventual releases
+ * before this page is deployed. Lunar surface Alt/Az is tracked upstream.
  */
 
 export const VERSIONS = {
@@ -11,16 +13,9 @@ export const VERSIONS = {
 } as const;
 
 export const REFERENCE = {
-  mjd: 60000.5,
   jd: 2460001.0,
-  site: 'Roque de los Muchachos',
-  sunAltDeg: 46.868,
-  sunAzDeg: 148.121,
-  moonAltDeg: 11.406,
-  moonAzDeg: 76.789,
   earthSelenoKm: 385046,
   marsGeoAu: 1.109577,
-  marsEarthSepAu: 1.109577,
 } as const;
 
 export const rustInstall = `cargo add siderust@${VERSIONS.rust}`;
