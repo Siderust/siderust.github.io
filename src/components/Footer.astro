@@ -28,6 +28,7 @@ const footerLinks = {
   resources: [
     { label: t(locale, 'nav.about'), href: localePath(locale, '/about') },
     { label: t(locale, 'nav.demo'), href: localePath(locale, '/demo') },
+    { label: locale === 'en' ? 'Space Apps 2026' : 'Space Apps 2026', href: localePath(locale, '/space-apps-2026') },
     { label: t(locale, 'footer.contributing'), href: localePath(locale, '/about#contributing') },
     { label: t(locale, 'footer.license'), href: `${siteConfig.orgUrl}/siderust/blob/main/LICENSE` },
     ...(siteConfig.sponsorship?.enabled ? [{ label: t(locale, 'nav.sponsor'), href: localePath(locale, '/sponsor') }] : []),
