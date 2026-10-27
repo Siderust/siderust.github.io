@@ -156,12 +156,12 @@ const en: SpaceAppsCopy = {
     'Any lunar Alt/Az result must state latitude/longitude convention, azimuth origin (usually north through east), local vertical, epoch, and that altitude is geometric — not terrain-occulted.',
   examplesHeading: 'Executable examples',
   examplesIntro:
-    'Copy-ready snippets verified against the published packages. Values below use MJD 60000.5 at Roque de los Muchachos where applicable.',
+    'Beginner-friendly examples: define your own observing site and compute the Sun’s position. The Rust sample uses the current UTC instant converted to TT; the Python sample uses a reproducible TT epoch.',
   tabRust: 'Rust',
   tabPython: 'Python',
   exEarthTitle: 'Sun Alt/Az from Earth (works today)',
   exEarthBody:
-    'Same numerical pipeline in Rust and Python. Useful for observation planning patterns and as a typed analogue of the horizon step you will later need on the Moon.',
+    'Start with your own longitude, latitude, and height. Change the coordinates to explore the sky above any Earth location. Rust uses the current instant; Python uses a fixed example date.',
   exLunarTitle: 'Sun & Earth relative to the Moon',
   exLunarBody:
     'Selenocentric ecliptic positions — the ephemeris/centre step of lunar illumination and Earth-visibility geometry. Not surface Alt/Az.',
@@ -284,12 +284,12 @@ const ca: SpaceAppsCopy = {
     'Qualsevol Alt/Az lunar ha d’especificar convenció de latitud/longitud, origen de l’azimut, vertical local, època, i que l’altitud és geomètrica — no ocultada pel terreny.',
   examplesHeading: 'Exemples executables',
   examplesIntro:
-    'Fragments verificats amb els paquets publicats. Els valors usen MJD 60000.5 a Roque de los Muchachos quan escau.',
+    'Exemples introductoris: defineix el teu lloc d’observació i calcula la posició del Sol. Rust converteix l’instant UTC actual a TT; Python utilitza una època TT reproduïble.',
   tabRust: 'Rust',
   tabPython: 'Python',
   exEarthTitle: 'Alt/Az del Sol des de la Terra (disponible avui)',
   exEarthBody:
-    'El mateix pipeline numèric en Rust i Python. Útil com a patró d’observació i com a anàleg tipat del pas d’horitzó que després caldrà a la Lluna.',
+    'Comença amb la teva longitud, latitud i altura. Canvia les coordenades per explorar el cel des de qualsevol lloc terrestre. Rust fa servir l’instant actual; Python, una data fixa.',
   exLunarTitle: 'Sol i Terra relatius a la Lluna',
   exLunarBody:
     'Posicions eclíptiques selenocèntriques — el pas d’efemèride/centre de la geometria d’il·luminació i de visibilitat de la Terra. No és Alt/Az de superfície.',
