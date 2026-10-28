@@ -1,21 +1,23 @@
 /**
  * Space Apps 2026 introductory code samples.
  *
- * Earth examples use custom observing sites. Rust samples convert UTC "now"
- * to the TT time scale; deterministic Python/mission examples use JD 2460001.0.
- * Update versions and verify every snippet against the eventual releases
- * before this page is deployed. Lunar surface Alt/Az is tracked upstream.
+ * Earth examples use custom observing sites and fixed epochs so their output
+ * is reproducible.
+ * Examples target the published releases listed below.
  */
 
 export const VERSIONS = {
-  rust: '0.15.1',
-  python: '0.6.0',
+  rust: '0.16.0',
+  python: '0.7.0',
 } as const;
 
 export const REFERENCE = {
   jd: 2460001.0,
   earthSelenoKm: 385046,
   marsGeoAu: 1.109577,
+  /** Deterministic NCP Alt/Az at J2000 TT for lon=20°, lat=-3.5° (IAU Moon). */
+  ncpAltDeg: 17.765928422857,
+  ncpAzDeg: 12.045094675187,
 } as const;
 
 export const rustInstall = `cargo add siderust@${VERSIONS.rust}`;
@@ -23,106 +25,136 @@ export const rustInstall = `cargo add siderust@${VERSIONS.rust}`;
 export const pythonInstall = `pip install siderust==${VERSIONS.python}`;
 
 /** Earth observer Alt/Az — works in published Rust and Python APIs. */
-export const rustEarthAltAz = `use siderust::bodies::solar_system::Sun;
-use siderust::coordinates::centers::Geodetic;
-use siderust::coordinates::frames::ECEF;
-use siderust::event::altitude::AltitudeProvider;
-use siderust::event::azimuth::AzimuthProvider;
-use siderust::qtty::{Degree, Degrees, Meters};
-use siderust::time::{ModifiedJulianDate, MJD, TT, Time, UTC};
+export const rustEarthAltAz = `use siderust::{
+    bodies::solar_system::Sun,
+    coordinates::{centers::Geodetic as Site, frames::ECEF},
+    qtty::{AstronomicalUnit, DEG, M},
+};
 
 fn main() {
-    // Your own location: longitude (east positive), latitude (north positive), height.
-    let site = Geodetic::<ECEF>::new(
-        Degrees::new(-6.14),  // longitude: Jerez de la Frontera
-        Degrees::new(36.68),  // latitude
-        Meters::new(50.0),   // height above WGS84 ellipsoid
-    );
+    // Seville: longitude east-positive, latitude north-positive.
+    let site = Site::<ECEF>::new(-5.9845 * DEG, 37.3891 * DEG, 7.0 * M);
 
-    // Convert the current UTC instant to the TT timescale used by Siderust.
-    let mjd: ModifiedJulianDate = Time::<UTC>::from_chrono(
-        siderust::chrono::Utc::now(),
-    ).to::<TT>().to::<MJD>();
+    // The result is already topocentric and horizontal.
+    let sun = Sun::get_horizontal::<AstronomicalUnit>(siderust::J2000, site);
 
-    let alt = Sun.altitude_at(&site, mjd);
-    let az = Sun.azimuth_at(&site, mjd);
-
-    println!("Sun altitude: {:.2}°", alt.to::<Degree>().value());
-    println!("Sun azimuth:  {:.2}°", az.to::<Degree>().value());
+    println!("Sun horizontal position: {sun:?}");
     // Altitude is geometric (no refraction); azimuth is north through east.
 }`;
 
-export const pythonEarthAltAz = `from siderust import Body, Observer
+export const pythonEarthAltAz = `from siderust import Body as B, Observer as Site
 
-# Custom Earth location: longitude east-positive, latitude north-positive.
-site = Observer(lon_deg=-6.14, lat_deg=36.68, height_m=50.0)
+# Seville: longitude east-positive, latitude north-positive.
+site = Site(lon_deg=-5.9845, lat_deg=37.3891, height_m=7.0)
 
 # A fixed epoch makes the output reproducible (MJD, TT).
 mjd = 60000.5
 
-print(f"Sun altitude: {Body.Sun.altitude_at(site, mjd):.2f}°")
-print(f"Sun azimuth:  {Body.Sun.azimuth_at(site, mjd):.2f}°")
+print(f"Sun altitude: {B.Sun.altitude_at(site, mjd):.2f}°")
+print(f"Sun azimuth:  {B.Sun.azimuth_at(site, mjd):.2f}°")
 # Altitude is geometric; azimuth is measured north through east.`;
 
 /**
- * Lunar geometry building block available today:
- * Sun and Earth positions relative to the Moon's centre (selenocentric),
- * mean ecliptic J2000. This is NOT lunar-surface Alt/Az.
+ * Lunar-surface geometric Alt/Az (Rust).
+ * Condensed from examples 21 / 22 in siderust 0.16.
  */
-export const rustLunarGeometry = `use siderust::bodies::solar_system::{Earth, Sun};
-use siderust::coordinates::cartesian::Position;
-use siderust::coordinates::centers::Selenocentric;
-use siderust::coordinates::frames::EclipticMeanJ2000;
-use siderust::coordinates::transform::TransformCenter;
-use siderust::qtty::{AstronomicalUnit, Kilometer};
-use siderust::time::{JulianDate, JD, TT, Time, UTC};
+export const rustLunarSurfaceAltAz = `use siderust::{
+    bodies::solar_system::Moon,
+    coordinates::{
+        cartesian::Position,
+        centers::Selenocentric,
+        frames::EclipticMeanJ2000 as Ecl,
+        surface::SurfaceSite,
+        transform::{AstroContext, SurfaceHorizontalExt, TransformCenter},
+    },
+    ephemeris::{Ephemeris, Vsop87Ephemeris},
+    qtty::{AstronomicalUnit, DEG, Kilometer, M},
+    time::JulianDate,
+};
 
-fn main() {
-    // Astronomical Julian date (TT) for the current UTC instant.
-    let jd: JulianDate = Time::<UTC>::from_chrono(
-        siderust::chrono::Utc::now(),
-    ).to::<TT>().to::<JD>();
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Lunar site on the IAU mean sphere (lon east, lat planetocentric).
+    let site = SurfaceSite::<Moon>::new(20.0 * DEG, (-3.5) * DEG, 0.0 * M)?;
+    let jd = JulianDate::new(2_460_000.5); // TT
+    let ctx: AstroContext = AstroContext::default();
 
-    // Target positions referred to the Moon's centre of mass.
-    let sun: Position<Selenocentric, EclipticMeanJ2000, AstronomicalUnit> =
-        Sun::vsop87e(jd).to_center(jd);
-    let earth: Position<Selenocentric, EclipticMeanJ2000, AstronomicalUnit> =
-        Earth::vsop87a(jd).to_center(jd);
+    // Earth from the Moon centre = −Moon(geocentric), then local Alt/Az.
+    let moon_geo = Vsop87Ephemeris::moon_geocentric(jd);
+    let earth_sel = Position::<Selenocentric, Ecl, Kilometer>::new(
+        -moon_geo.x(), -moon_geo.y(), -moon_geo.z(),
+    );
+    let earth = site.observe_position(&earth_sel, &jd, &ctx)?;
 
-    println!("Sun–Moon range:   {:.0} km", sun.distance().to::<Kilometer>().value());
-    println!("Earth–Moon range: {:.0} km", earth.distance().to::<Kilometer>().value());
-    // Geometric distance; this is NOT a lunar surface altitude/azimuth.
+    let sun_bary = Vsop87Ephemeris::sun_barycentric(jd);
+    let sun_sel: Position<Selenocentric, Ecl, AstronomicalUnit> =
+        TransformCenter::to_center_with(&sun_bary, (), jd, &ctx);
+    let sun = site.observe_position(&sun_sel, &jd, &ctx)?;
+
+    println!("Earth: alt={}, az={}, range={}", earth.alt(), earth.az(), earth.range());
+    println!("Sun:   alt={}, az={}, range={}", sun.alt(), sun.az(), sun.range());
+    // Geometric only; azimuth north→east. No refraction or terrain.
+    Ok(())
 }`;
 
+/**
+ * Lunar-surface geometric Alt/Az (Python, siderust 0.7).
+ * Mirrors examples/14_lunar_surface_altaz.py.
+ */
+export const pythonLunarSurfaceAltAz = `from siderust import LunarObserver
+from siderust.direction import ICRS
+
+# Lunar site on the IAU mean sphere (R = 1737.4 km).
+# Longitude east-positive; latitude planetocentric; height above the sphere.
+site = LunarObserver(lon_deg=20.0, lat_deg=-3.5, height_m=0.0)
+
+# Direction-only: north celestial pole at J2000 TT (no invented parallax).
+ncp = ICRS(ra_deg=0.0, dec_deg=90.0)
+hz = site.observe_direction(ncp, jd_tt=2451545.0)
+print(f"NCP: alt={hz.alt_deg:.6f}°, az={hz.az_deg:.6f}°")
+# Expected ≈ alt=17.765928°, az=12.045095° (N=0°, E=90°)
+
+# Finite-distance Earth and Sun from the lunar site (ephemeris + transform).
+jd = 2460000.5  # Julian Date TT
+earth = site.observe_earth(jd)
+sun = site.observe_sun(jd)
+print(f"Earth: alt={earth.alt_deg:.4f}°, az={earth.az_deg:.4f}°, range={earth.range:.3f} {earth.range_unit}")
+print(f"Sun:   alt={sun.alt_deg:.4f}°, az={sun.az_deg:.4f}°, range={sun.range:.6f} {sun.range_unit}")
+# Geometric only: no refraction, aberration, light-time, or terrain.`;
+
 /** Mission-design style relative distance (Rust). */
-export const rustMissionDistance = `use siderust::bodies::solar_system::Mars;
-use siderust::coordinates::cartesian::Position;
-use siderust::coordinates::centers::Geocentric;
-use siderust::coordinates::frames::EclipticMeanJ2000;
-use siderust::coordinates::transform::TransformCenter;
-use siderust::qtty::AstronomicalUnit;
-use siderust::time::JulianDate;
+export const rustMissionDistance = `use siderust::{
+    bodies::solar_system::Mars,
+    coordinates::{
+        cartesian::Position,
+        centers::Geocentric,
+        frames::EclipticMeanJ2000 as Ecl,
+        transform::TransformCenter,
+    },
+    qtty::AstronomicalUnit,
+    time::JulianDate,
+};
 
 fn main() {
+    type Ecliptic = Position<Geocentric, Ecl, AstronomicalUnit>;
+
     let jd = JulianDate::new(2_460_001.0);
-    let mars_geo: Position<Geocentric, EclipticMeanJ2000, AstronomicalUnit> =
-        Mars::vsop87a(jd).to_center(jd);
-    println!("Mars geocentric range: {:.6} AU", mars_geo.distance().value());
+    let mars_geo: Ecliptic = Mars::vsop87a(jd).to_center(jd);
+    println!("Mars geocentric range: {}", mars_geo.distance());
     // Expected ≈ 1.109577 AU
 }`;
 
 /** Mission-design style relative distance (Python). */
-export const pythonMissionDistance = `from siderust import Body
+export const pythonMissionDistance = `from siderust import Body as B
 
 jd = 2460001.0
-earth = Body.Earth.track(jd)
-mars = Body.Mars.track(jd)
+earth = B.Earth.track(jd)
+mars = B.Mars.track(jd)
 
 # Barycentric tracks → mutual separation (≈ geocentric Mars range).
 sep_au = earth.position.distance_to(mars.position)
 print(f"Earth–Mars separation: {sep_au:.6f} AU")
 # Expected ≈ 1.109577 AU
 
-moon = Body.Moon.track(jd)  # geocentric ecliptic, kilometres
+moon = B.Moon.track(jd)  # geocentric ecliptic, kilometres
 print(f"Geocentric Moon range: {moon.position.distance():.0f} km")
 # Expected ≈ 385046 km`;

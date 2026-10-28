@@ -15,7 +15,7 @@ Hello,
 
 For teams working on **CLPS Lunar Mission Browser**, **Space Mission Design Game**, or other astronomy-related challenges at NASA Space Apps Challenge 2026 (14–15 November), the Siderust project offers a free, independent open-source toolkit for ephemerides, coordinate transforms, and observation geometry in **Rust** and **Python**.
 
-It can help with lunar-related geometry building blocks (e.g. Sun/Earth positions relative to the Moon) and educational orbital-mechanics calculations. Some advanced lunar-site Alt/Az helpers are still evolving; the participant page documents what is published today, with copy-ready examples.
+It can compute lunar-site geometric Alt/Az for the Sun and Earth, as well as lunar-related geometry building blocks and educational orbital-mechanics calculations. The participant page includes copy-ready examples for the published Siderust v0.16.0 (Rust) and siderust-py v0.7.0 (Python `LunarObserver`) APIs.
 
 Participant guide: **https://siderust.org/en/space-apps-2026**
 
@@ -36,7 +36,7 @@ Hola,
 
 Para equipos que trabajen en **CLPS Lunar Mission Browser**, **Space Mission Design Game** u otros retos de astronomía del NASA Space Apps Challenge 2026 (14–15 de noviembre), el proyecto Siderust ofrece un conjunto de herramientas independientes de código abierto para efemérides, transformaciones de coordenadas y geometría de observación en **Rust** y **Python**.
 
-Puede ayudar con bloques de geometría lunar (p. ej. posiciones del Sol y la Tierra respecto a la Luna) y con cálculos educativos de mecánica orbital. Algunas ayudas avanzadas de Alt/Az en la superficie lunar siguen en evolución; la página para participantes documenta lo que hay publicado hoy, con ejemplos listos para copiar.
+Puede calcular Alt/Az geométrico desde un lugar lunar para el Sol y la Tierra, además de ofrecer bloques de geometría lunar y cálculos educativos de mecánica orbital. La página para participantes incluye ejemplos listos para copiar de las APIs publicadas en Siderust v0.16.0 (Rust) y siderust-py v0.7.0 (Python `LunarObserver`).
 
 Guía para participantes: **https://siderust.org/en/space-apps-2026**  
 (versión en catalán: https://siderust.org/ca/space-apps-2026)
@@ -50,15 +50,15 @@ El equipo de Siderust
 
 ---
 
-## Upstream follow-up (maintainers)
+## Published lunar Alt/Az API
 
-Full lunar-surface Alt/Az (selenographic site → local ENU → geometric altitude/azimuth for Sun/Earth) is **not** a first-class public API in siderust 0.15.1 / siderust-py 0.6.0.
+Siderust v0.16.0 provides lunar-surface geometric Alt/Az through a typed
+`SurfaceSite<Moon>` and the body-surface horizontal pipeline. siderust-py
+v0.7.0 exposes the same capability as `LunarObserver` with
+`observe_direction` / `observe_position` / `observe_earth` / `observe_sun`.
 
-Recommended upstream work (separate repos, not the website):
-
-1. **siderust:** lunar-site observer type + horizon projection using Moon principal axes / selenocentric positions; pole azimuth convention; geometric vs topographic altitude documentation; validation against an independent lunar ephemeris / orientation reference.  
-   Tracking: https://github.com/Siderust/siderust/issues/121
-2. **siderust-py:** expose selenocentric helpers and lunar Alt/Az once the Rust API is stable.  
-   Tracking: https://github.com/Siderust/siderust-py/issues/17
-
-Until then, the landing page advertises only verified capabilities and shows working Earth Alt/Az plus selenocentric (Rust) / geocentric Moon (Python) examples.
+Finite-distance targets include topocentric parallax; direction-only targets
+do not invent a distance. Results use the north-through-east azimuth
+convention and geometric altitude, without refraction or terrain masking.
+Orientation is MoonIauMeanEarth (NAIF `IAU_MOON` Mean-Earth), not JPL DE
+`MOON_PA`. Epochs are Julian Date TT.

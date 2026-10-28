@@ -2,8 +2,8 @@
 /**
  * NASA Space Apps Challenge 2026 outreach landing page.
  *
- * Independent community resource. Claims stay aligned with published APIs.
- * Lunar-surface Alt/Az is documented as not yet a first-class public API.
+ * Independent community resource. Claims stay aligned with published APIs:
+ * siderust 0.16 (Rust SurfaceSite::<Moon>) and siderust-py 0.7 (LunarObserver).
  */
 import Layout from '../../layouts/Layout.astro';
 import CodeSnippet from '../../components/CodeSnippet.astro';
@@ -17,7 +17,8 @@ import {
   pythonInstall,
   rustEarthAltAz,
   pythonEarthAltAz,
-  rustLunarGeometry,
+  rustLunarSurfaceAltAz,
+  pythonLunarSurfaceAltAz,
   rustMissionDistance,
   pythonMissionDistance,
 } from '../../lib/space-apps-2026/examples';
@@ -162,9 +163,6 @@ const eventUrl = 'https://www.spaceappschallenge.org/2026/';
           </p>
         </article>
       </div>
-      <p class="mt-6 text-sm">
-        <a class="link" href={challengesUrl} target="_blank" rel="noopener noreferrer">{copy.challengeLink} ↗</a>
-      </p>
     </div>
   </section>
 
@@ -237,7 +235,7 @@ const eventUrl = 'https://www.spaceappschallenge.org/2026/';
         </p>
       </div>
 
-      <!-- Lunar geometry (Rust only for selenocentric) -->
+      <!-- Lunar surface Alt/Az -->
       <div class="mt-12" data-lang-tabs>
         <h3 class="text-xl font-semibold text-gray-900 dark:text-white">{copy.exLunarTitle}</h3>
         <p class="mt-2 text-gray-600 dark:text-gray-400 leading-relaxed">{copy.exLunarBody}</p>
@@ -246,27 +244,16 @@ const eventUrl = 'https://www.spaceappschallenge.org/2026/';
           <button type="button" class="lang-tab btn-ghost text-sm px-3 py-1.5" data-lang="python" role="tab" aria-selected="false">{copy.tabPython}</button>
         </div>
         <div class="mt-4 lang-panel" data-lang-panel="rust">
-          <CodeSnippet code={rustLunarGeometry} lang="rust" copyLabel={copy.copyLabel} />
-          <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
-            {locale === 'en'
-              ? 'This uses the current instant (JD in TT). Distances change with time; it is not a lunar surface Alt/Az calculation.'
-              : 'Aquest exemple fa servir l’instant actual (JD en TT). Les distàncies varien amb el temps; no és un càlcul d’Alt/Az des de la superfície lunar.'}
-          </p>
+          <CodeSnippet code={rustLunarSurfaceAltAz} lang="rust" copyLabel={copy.copyLabel} />
         </div>
         <div class="mt-4 lang-panel hidden" data-lang-panel="python">
-          <div class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-5 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-            {locale === 'en'
-              ? `Selenocentric centre transforms are not exposed in siderust ${VERSIONS.python} yet. Use the Earth Alt/Az or Earth–Mars examples in Python, or the Rust selenocentric snippet above. A geocentric Moon range is available via Body.Moon.track(jd).`
-              : `Les transformacions selenocèntriques encara no estan exposades a siderust ${VERSIONS.python}. Useu els exemples d’Alt/Az terrestre o Terra–Mart en Python, o el fragment selenocèntric en Rust. La distància geocèntrica a la Lluna està disponible amb Body.Moon.track(jd).`}
-          </div>
-          <div class="mt-4">
-            <CodeSnippet
-              code={`from siderust import Body\n\nmoon = Body.Moon.track(${REFERENCE.jd})\nprint(f"Geocentric Moon range: {moon.position.distance():.0f} km")\n# Expected ≈ ${REFERENCE.earthSelenoKm} km`}
-              lang="python"
-              copyLabel={copy.copyLabel}
-            />
-          </div>
+          <CodeSnippet code={pythonLunarSurfaceAltAz} lang="python" copyLabel={copy.copyLabel} />
         </div>
+        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+          {locale === 'en'
+            ? `Change lon/lat for your landing site. Epochs are Julian Date TT. NCP check at J2000: ≈ alt ${REFERENCE.ncpAltDeg}°, az ${REFERENCE.ncpAzDeg}°.`
+            : `Canvia lon/lat per al teu lloc d’aterratge. Les èpoques són data juliana TT. Comprovació NCP a J2000: ≈ alt ${REFERENCE.ncpAltDeg}°, az ${REFERENCE.ncpAzDeg}°.`}
+        </p>
       </div>
 
       <!-- Mission distance -->

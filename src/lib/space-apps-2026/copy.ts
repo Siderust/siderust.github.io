@@ -23,7 +23,6 @@ export type SpaceAppsCopy = {
   missionTitle: string;
   missionBody: string;
   missionBullets: string[];
-  challengeLink: string;
   clpsLinkLabel: string;
   missionLinkLabel: string;
   capabilities: string;
@@ -90,10 +89,10 @@ const en: SpaceAppsCopy = {
   challengesHeading: 'Relevant 2026 challenges',
   clpsTitle: 'CLPS Lunar Mission Browser',
   clpsBody:
-    'Comparing lunar landing sites and dates needs Sun and Earth directions relative to a lunar location, illumination geometry, and careful time handling. Siderust already provides selenocentric ephemerides, lunar body-fixed orientation models, and typed centre/frame transforms that teams can build on.',
+    'Comparing lunar landing sites and dates needs Sun and Earth directions relative to a lunar location, illumination geometry, and careful time handling. Siderust provides lunar-surface geometric Alt/Az in Rust and Python, plus selenocentric ephemerides and typed centre/frame transforms.',
   clpsBullets: [
-    'Lunar reference centres (Selenocentric) and Moon principal-axes orientation models',
-    'Sun and Earth positions relative to the Moon at a chosen epoch',
+    'Lunar-surface geometric Alt/Az for the Sun and Earth from a selenographic site',
+    'Lunar reference centres (Selenocentric) and MoonIauMeanEarth orientation',
     'Coordinate and centre transformations with explicit units and frames',
     'Observation times via Julian / Modified Julian dates',
   ],
@@ -106,7 +105,6 @@ const en: SpaceAppsCopy = {
     'Reference-frame conversions for visualization and scoring',
     'Keplerian / mission-geometry helpers in the Rust crate',
   ],
-  challengeLink: 'Official 2026 challenges',
   clpsLinkLabel: 'CLPS Lunar Mission Browser (official listing)',
   missionLinkLabel: 'Space Mission Design Game (official listing)',
   capabilities: 'What you can rely on today',
@@ -120,8 +118,8 @@ const en: SpaceAppsCopy = {
       detail: 'Centres, frames, and physical units encoded in the type system (Rust) or runtime metadata (Python).',
     },
     {
-      name: 'Earth observation geometry',
-      detail: 'Published Alt/Az and event search for Earth-based observers.',
+      name: 'Lunar & Earth Alt/Az',
+      detail: 'Geometric horizon angles for Earth observers and lunar surface sites (Sun, Earth, ICRS directions).',
     },
     {
       name: 'Rust + Python',
@@ -130,18 +128,18 @@ const en: SpaceAppsCopy = {
   ],
   lunarHeading: 'Where is the Sun in the lunar sky?',
   lunarIntro:
-    'CLPS-style tools need the apparent direction of the Sun or Earth from a fixed lunar site. Conceptually the calculation has three steps. Siderust publishes solid building blocks for steps 1–2; a ready-made lunar-surface Alt/Az helper is not yet part of the public API.',
+    'CLPS-style tools need the apparent direction of the Sun or Earth from a fixed lunar site. Siderust v0.16.0 (Rust) and siderust-py 0.7.0 provide the complete geometric pipeline: define a typed lunar site, transform the target to the Moon-fixed frame, and project it into the local horizontal system.',
   lunarStepsTitle: 'Three conceptual steps',
   lunarSteps: [
     {
       title: '1. Define a lunar surface observer',
       detail:
-        'Selenographic latitude, longitude, and radius (or elevation) in a Moon-fixed frame such as Moon principal axes. Poles need a defined azimuth convention.',
+        'Selenographic longitude (east-positive), planetocentric latitude, and height on the IAU mean sphere. In Rust use SurfaceSite::<Moon>; in Python use LunarObserver. Poles need a defined azimuth convention.',
     },
     {
       title: '2. Obtain the target with an ephemeris',
       detail:
-        'Place the Sun or Earth in a common centre (typically Selenocentric) at the observation epoch using VSOP87-based models.',
+        'Place the Sun or Earth in a common centre (typically Selenocentric) at the observation epoch using VSOP87-based models. Python helpers observe_earth / observe_sun do this for you.',
     },
     {
       title: '3. Project into the local lunar horizon',
@@ -149,22 +147,22 @@ const en: SpaceAppsCopy = {
         'Build a local east–north–up basis at the site and report azimuth and geometric altitude. This is geometric altitude above a reference horizon — not topographic visibility or terrain shadowing.',
     },
   ],
-  lunarLimitTitle: 'Current limitation (please read)',
+  lunarLimitTitle: 'Lunar surface Alt/Az',
   lunarLimitBody:
-    'Published siderust provides Selenocentric centre transforms and Moon principal-axes orientation models, but does not yet expose a first-class lunar-site Alt/Az API comparable to Earth Geodetic<ECEF> → Horizontal. Python bindings currently cover Earth observers and barycentric/geocentric tracks — not selenocentric helpers. Do not reuse Earth horizontal transforms for lunar observers. Full lunar Alt/Az belongs in upstream siderust / siderust-py, with scientific tests, not as ad-hoc website maths.',
+    'Rust: SurfaceSite::<Moon> with the body-surface horizontal API (siderust 0.16). Python: LunarObserver with observe_direction / observe_position / observe_earth / observe_sun (siderust 0.7). Finite-distance targets use topocentric parallax; direction-only targets never invent a distance. Results are geometric Alt/Az — no refraction, aberration, light-time, or terrain masking.',
   lunarConventions:
-    'Any lunar Alt/Az result must state latitude/longitude convention, azimuth origin (usually north through east), local vertical, epoch, and that altitude is geometric — not terrain-occulted.',
+    'Any lunar Alt/Az result must state latitude/longitude convention, azimuth origin (usually north through east), local vertical, epoch (Julian Date TT), and that altitude is geometric — not terrain-occulted. Orientation uses MoonIauMeanEarth (NAIF IAU_MOON Mean-Earth), not JPL DE MOON_PA.',
   examplesHeading: 'Executable examples',
   examplesIntro:
-    'Beginner-friendly examples: define your own observing site and compute the Sun’s position. The Rust sample uses the current UTC instant converted to TT; the Python sample uses a reproducible TT epoch.',
+    'Beginner-friendly examples for Earth observers, lunar-surface Alt/Az, and mission-style distances. Samples use reproducible fixed epochs.',
   tabRust: 'Rust',
   tabPython: 'Python',
-  exEarthTitle: 'Sun Alt/Az from Earth (works today)',
+  exEarthTitle: 'Sun Alt/Az from Earth',
   exEarthBody:
-    'Start with your own longitude, latitude, and height. Change the coordinates to explore the sky above any Earth location. Rust uses the current instant; Python uses a fixed example date.',
-  exLunarTitle: 'Sun & Earth relative to the Moon',
+    'Start with your own longitude, latitude, and height. Change the coordinates to explore the sky above any Earth location.',
+  exLunarTitle: 'Sun & Earth Alt/Az from the Moon',
   exLunarBody:
-    'Selenocentric ecliptic positions — the ephemeris/centre step of lunar illumination and Earth-visibility geometry. Not surface Alt/Az.',
+    'Geometric altitude and azimuth from a lunar surface site — the CLPS illumination and Earth-visibility primitive. Python LunarObserver wraps the same Rust pipeline.',
   exMissionTitle: 'Earth–Mars separation',
   exMissionBody:
     'A compact mission-design primitive: relative distance between planets at a fixed epoch.',
@@ -218,10 +216,10 @@ const ca: SpaceAppsCopy = {
   challengesHeading: 'Reptes rellevants del 2026',
   clpsTitle: 'CLPS Lunar Mission Browser',
   clpsBody:
-    'Comparar llocs i dates d’aterratge lunar exigeix direccions del Sol i de la Terra, geometria d’il·luminació i un tractament cuós del temps. Siderust ja ofereix efemèrides selenocèntriques, models d’orientació lunar i transformacions tipades.',
+    'Comparar llocs i dates d’aterratge lunar exigeix direccions del Sol i de la Terra, geometria d’il·luminació i un tractament cuós del temps. Siderust ofereix Alt/Az geomètric de superfície lunar en Rust i Python, a més d’efemèrides selenocèntriques i transformacions tipades.',
   clpsBullets: [
-    'Centres lunars (Selenocentric) i models d’eixos principals de la Lluna',
-    'Posicions del Sol i de la Terra relatives a la Lluna en una època donada',
+    'Alt/Az geomètric de superfície lunar per al Sol i la Terra des d’un lloc selenogràfic',
+    'Centres lunars (Selenocentric) i orientació MoonIauMeanEarth',
     'Transformacions de centres i sistemes amb unitats explícites',
     'Temps d’observació amb dates julianes / julianes modificades',
   ],
@@ -234,7 +232,6 @@ const ca: SpaceAppsCopy = {
     'Conversions de sistemes de referència per a visualització',
     'Ajudes keplerianes / de geometria de missió al crate Rust',
   ],
-  challengeLink: 'Reptes oficials del 2026',
   clpsLinkLabel: 'CLPS Lunar Mission Browser (llistat oficial)',
   missionLinkLabel: 'Space Mission Design Game (llistat oficial)',
   capabilities: 'Què pots fer servir avui',
@@ -248,8 +245,8 @@ const ca: SpaceAppsCopy = {
       detail: 'Centres, sistemes i unitats físiques al sistema de tipus (Rust) o metadades (Python).',
     },
     {
-      name: 'Geometria d’observació terrestre',
-      detail: 'Alt/Az i cerca d’esdeveniments publicats per a observadors a la Terra.',
+      name: 'Alt/Az lunar i terrestre',
+      detail: 'Angles horitzontals geomètrics per a observadors a la Terra i llocs a la superfície lunar (Sol, Terra, direccions ICRS).',
     },
     {
       name: 'Rust + Python',
@@ -258,18 +255,18 @@ const ca: SpaceAppsCopy = {
   ],
   lunarHeading: 'On és el Sol al cel lunar?',
   lunarIntro:
-    'Les eines a l’estil CLPS necessiten la direcció aparent del Sol o de la Terra des d’un lloc lunar. Conceptualment hi ha tres passos. Siderust publica blocs sòlids per als passos 1–2; encara no hi ha una API pública d’Alt/Az lunar comparable a la terrestre.',
+    'Les eines a l’estil CLPS necessiten la direcció aparent del Sol o de la Terra des d’un lloc lunar. Siderust v0.16.0 (Rust) i siderust-py 0.7.0 ofereixen el pipeline geomètric complet: defineix un lloc lunar tipat, transforma l’objectiu al sistema fix de la Lluna i projecta’l al sistema horitzontal local.',
   lunarStepsTitle: 'Tres passos conceptuals',
   lunarSteps: [
     {
       title: '1. Defineix un observador a la superfície lunar',
       detail:
-        'Latitud i longitud selenogràfiques i radi (o elevació) en un sistema fix a la Lluna. Als pols cal una convenció d’azimut.',
+        'Longitud selenogràfica (est-positiva), latitud planetocèntrica i altura sobre l’esfera mitjana IAU. En Rust: SurfaceSite::<Moon>; en Python: LunarObserver. Als pols cal una convenció d’azimut.',
     },
     {
       title: '2. Obté l’objectiu amb una efemèride',
       detail:
-        'Situa el Sol o la Terra en un centre comú (típicament Selenocentric) a l’època d’observació amb models VSOP87.',
+        'Situa el Sol o la Terra en un centre comú (típicament Selenocentric) a l’època d’observació amb models VSOP87. Els helpers Python observe_earth / observe_sun ho fan per tu.',
     },
     {
       title: '3. Projecta al horitzó lunar local',
@@ -277,22 +274,22 @@ const ca: SpaceAppsCopy = {
         'Construeix una base local est–nord–zenit i reporta azimut i altitud geomètrica. Això no és visibilitat topogràfica ni ombres del terreny.',
     },
   ],
-  lunarLimitTitle: 'Limitació actual (cal llegir-la)',
+  lunarLimitTitle: 'Alt/Az de superfície lunar',
   lunarLimitBody:
-    'El siderust publicat ofereix transformacions selenocèntriques i models d’orientació dels eixos principals de la Lluna, però encara no una API d’Alt/Az per a llocs lunars comparable a Geodetic<ECEF> → Horizontal a la Terra. Els enllaços Python cobreixen observadors terrestres i pistes bari/geocèntriques, no ajudes selenocèntriques. No reutilitzeu les transformacions horitzontals terrestres per a observadors lunars. L’Alt/Az lunar complet pertany a siderust / siderust-py, amb proves científiques.',
+    'Rust: SurfaceSite::<Moon> amb l’API horitzontal de superfícies corporals (siderust 0.16). Python: LunarObserver amb observe_direction / observe_position / observe_earth / observe_sun (siderust 0.7). Els objectius a distància finita inclouen la paral·laxi topocèntrica; els objectius només com a direcció no inventen cap distància. El resultat és Alt/Az geomètric — sense refracció, aberració, temps de vol ni màscara del terreny.',
   lunarConventions:
-    'Qualsevol Alt/Az lunar ha d’especificar convenció de latitud/longitud, origen de l’azimut, vertical local, època, i que l’altitud és geomètrica — no ocultada pel terreny.',
+    'Qualsevol Alt/Az lunar ha d’especificar convenció de latitud/longitud, origen de l’azimut, vertical local, època (data juliana TT), i que l’altitud és geomètrica — no ocultada pel terreny. L’orientació usa MoonIauMeanEarth (NAIF IAU_MOON Mean-Earth), no JPL DE MOON_PA.',
   examplesHeading: 'Exemples executables',
   examplesIntro:
-    'Exemples introductoris: defineix el teu lloc d’observació i calcula la posició del Sol. Rust converteix l’instant UTC actual a TT; Python utilitza una època TT reproduïble.',
+    'Exemples introductoris per a observadors terrestres, Alt/Az de superfície lunar i distàncies d’estil missió. Els exemples utilitzen èpoques fixes reproduïbles.',
   tabRust: 'Rust',
   tabPython: 'Python',
-  exEarthTitle: 'Alt/Az del Sol des de la Terra (disponible avui)',
+  exEarthTitle: 'Alt/Az del Sol des de la Terra',
   exEarthBody:
-    'Comença amb la teva longitud, latitud i altura. Canvia les coordenades per explorar el cel des de qualsevol lloc terrestre. Rust fa servir l’instant actual; Python, una data fixa.',
-  exLunarTitle: 'Sol i Terra relatius a la Lluna',
+    'Comença amb la teva longitud, latitud i altura. Canvia les coordenades per explorar el cel des de qualsevol lloc terrestre.',
+  exLunarTitle: 'Alt/Az del Sol i la Terra des de la Lluna',
   exLunarBody:
-    'Posicions eclíptiques selenocèntriques — el pas d’efemèride/centre de la geometria d’il·luminació i de visibilitat de la Terra. No és Alt/Az de superfície.',
+    'Altitud i azimut geomètrics des d’un lloc a la superfície lunar — la primitiva CLPS d’il·luminació i visibilitat de la Terra. LunarObserver en Python encapsula el mateix pipeline Rust.',
   exMissionTitle: 'Separació Terra–Mart',
   exMissionBody:
     'Una primitiva compacta de disseny de missions: distància relativa entre planetes en una època fixa.',

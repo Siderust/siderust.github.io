@@ -20,7 +20,7 @@
       "url": "https://crates.io/crates/qtty"
     },
     "siderust": {
-      "version": "0.15.1",
+      "version": "0.16.0",
       "source": "crates.io",
       "url": "https://crates.io/crates/siderust"
     },
