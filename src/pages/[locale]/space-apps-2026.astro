@@ -1,0 +1,393 @@
+---
+/**
+ * NASA Space Apps Challenge 2026 outreach landing page.
+ *
+ * Independent community resource. Claims stay aligned with published APIs:
+ * siderust 0.16 (Rust SurfaceSite::<Moon>) and siderust-py 0.7 (LunarObserver).
+ */
+import Layout from '../../layouts/Layout.astro';
+import CodeSnippet from '../../components/CodeSnippet.astro';
+import siteConfig from '../../site.config';
+import { getLocaleStaticPaths, localePath, type Locale } from '../../i18n/index';
+import { getSpaceAppsCopy } from '../../lib/space-apps-2026/copy';
+import {
+  REFERENCE,
+  VERSIONS,
+  rustInstall,
+  pythonInstall,
+  rustEarthAltAz,
+  pythonEarthAltAz,
+  rustLunarSurfaceAltAz,
+  pythonLunarSurfaceAltAz,
+  rustMissionDistance,
+  pythonMissionDistance,
+} from '../../lib/space-apps-2026/examples';
+
+export function getStaticPaths() {
+  return getLocaleStaticPaths();
+}
+
+const locale = Astro.params.locale as Locale;
+const copy = getSpaceAppsCopy(locale);
+const challengesUrl = 'https://www.spaceappschallenge.org/2026/challenges/';
+const eventUrl = 'https://www.spaceappschallenge.org/2026/';
+---
+
+<Layout
+  locale={locale}
+  title={copy.title}
+  description={copy.seo}
+  image="/space-apps-2026-hero.svg"
+>
+  <!-- Hero -->
+  <section class="relative overflow-hidden bg-slate-950 text-slate-100">
+    <div
+      class="pointer-events-none absolute inset-0 opacity-80"
+      style="background:
+        radial-gradient(ellipse 80% 60% at 70% 20%, rgba(237,119,18,0.18), transparent 55%),
+        radial-gradient(ellipse 60% 50% at 15% 80%, rgba(30,58,95,0.55), transparent 50%),
+        linear-gradient(160deg, #020617 0%, #0f172a 45%, #111827 100%);"
+      aria-hidden="true"
+    ></div>
+
+    <div class="container-custom relative py-16 md:py-24 lg:py-28">
+      <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div class="max-w-xl">
+          <div class="flex flex-wrap items-center gap-3 mb-6">
+            <img
+              src={siteConfig.logo}
+              alt="Siderust"
+              class="h-12 w-12 rounded-xl shadow-lg shadow-brand-500/20"
+              width="48"
+              height="48"
+            />
+            <p class="text-sm font-medium text-brand-300">{copy.eyebrow}</p>
+          </div>
+
+          <p class="text-sm md:text-base text-sky-200/90 font-medium tracking-wide">
+            <a href={eventUrl} class="hover:text-white underline-offset-2 hover:underline" target="_blank" rel="noopener noreferrer">
+              {copy.dates}
+            </a>
+          </p>
+
+          <h1 class="mt-4 text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white leading-tight">
+            {copy.headline}
+          </h1>
+          <p class="mt-4 text-lg text-slate-300 leading-relaxed">{copy.tagline}</p>
+          <p class="mt-4 text-base text-slate-400 leading-relaxed">{copy.intro}</p>
+
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a class="btn-primary" href="#get-started">{copy.ctaStart}</a>
+            <a class="btn-secondary bg-white/10 text-white hover:bg-white/20 border border-white/10" href="#examples">{copy.ctaExamples}</a>
+            <a
+              class="btn-ghost text-slate-200 hover:bg-white/10"
+              href="https://github.com/Siderust/siderust"
+              target="_blank"
+              rel="noopener noreferrer"
+            >{copy.ctaGithub}</a>
+          </div>
+
+          <p class="mt-6 text-xs text-slate-500 max-w-md leading-relaxed">{copy.independence}</p>
+        </div>
+
+        <div class="relative">
+          <img
+            src="/space-apps-2026-hero.svg"
+            alt={locale === 'en'
+              ? 'Schematic of the Moon with a surface observer and Sun and Earth directions'
+              : 'Esquema de la Lluna amb un observador en superfície i direccions del Sol i la Terra'}
+            class="w-full rounded-2xl border border-white/10 shadow-2xl shadow-black/40"
+            width="960"
+            height="640"
+            loading="eager"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Four questions -->
+  <section class="py-14 md:py-20 border-b border-gray-200 dark:border-gray-800">
+    <div class="container-custom max-w-5xl">
+      <div class="grid md:grid-cols-2 gap-10">
+        <article>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{copy.whatIs}</h2>
+          <p class="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed">{copy.whatIsBody}</p>
+        </article>
+        <article>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{copy.whyHelp}</h2>
+          <p class="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed">
+            {locale === 'en'
+              ? 'Especially for lunar illumination / Earth-visibility tooling and educational orbital mechanics. See the challenge notes and executable examples below.'
+              : 'Especialment per a eines d’il·luminació lunar / visibilitat de la Terra i mecànica orbital educativa. Consulteu les notes dels reptes i els exemples executables.'}
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Challenges -->
+  <section class="py-14 md:py-20 bg-gray-50 dark:bg-gray-900/40">
+    <div class="container-custom">
+      <h2 class="section-heading">{copy.challengesHeading}</h2>
+      <div class="mt-8 grid gap-6 lg:grid-cols-2">
+        <article class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 md:p-8">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">{copy.clpsTitle}</h3>
+          <p class="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed">{copy.clpsBody}</p>
+          <ul class="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+            {copy.clpsBullets.map((item) => (
+              <li class="flex gap-2">
+                <span class="text-brand-500 mt-0.5" aria-hidden="true">•</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+          <p class="mt-5 text-sm">
+            <a class="link" href={challengesUrl} target="_blank" rel="noopener noreferrer">{copy.clpsLinkLabel} ↗</a>
+          </p>
+        </article>
+
+        <article class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 md:p-8">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">{copy.missionTitle}</h3>
+          <p class="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed">{copy.missionBody}</p>
+          <ul class="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+            {copy.missionBullets.map((item) => (
+              <li class="flex gap-2">
+                <span class="text-brand-500 mt-0.5" aria-hidden="true">•</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+          <p class="mt-5 text-sm">
+            <a class="link" href={challengesUrl} target="_blank" rel="noopener noreferrer">{copy.missionLinkLabel} ↗</a>
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Capabilities -->
+  <section class="py-14 md:py-20">
+    <div class="container-custom">
+      <h2 class="section-heading">{copy.capabilities}</h2>
+      <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {copy.features.map((feature) => (
+          <article class="rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{feature.name}</h3>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{feature.detail}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Lunar geometry education -->
+  <section id="lunar-geometry" class="py-14 md:py-20 bg-gray-50 dark:bg-gray-900/40 scroll-mt-24">
+    <div class="container-custom max-w-5xl">
+      <h2 class="section-heading">{copy.lunarHeading}</h2>
+      <p class="mt-4 text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-3xl">{copy.lunarIntro}</p>
+
+      <h3 class="mt-10 text-xl font-semibold text-gray-900 dark:text-white">{copy.lunarStepsTitle}</h3>
+      <ol class="mt-6 grid gap-4 md:grid-cols-3">
+        {copy.lunarSteps.map((step, i) => (
+          <li class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">
+              {locale === 'en' ? `Step ${i + 1}` : `Pas ${i + 1}`}
+            </p>
+            <h4 class="mt-2 font-semibold text-gray-900 dark:text-white">{step.title.replace(/^\d+\.\s*/, '')}</h4>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{step.detail}</p>
+          </li>
+        ))}
+      </ol>
+
+      <aside class="mt-8 rounded-xl border border-amber-300/60 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-950/30 p-5 md:p-6" role="note">
+        <h3 class="font-semibold text-amber-950 dark:text-amber-100">{copy.lunarLimitTitle}</h3>
+        <p class="mt-2 text-sm text-amber-950/90 dark:text-amber-100/90 leading-relaxed">{copy.lunarLimitBody}</p>
+        <p class="mt-3 text-sm text-amber-900/80 dark:text-amber-200/80 leading-relaxed">{copy.lunarConventions}</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Examples -->
+  <section id="examples" class="py-14 md:py-20 scroll-mt-24">
+    <div class="container-custom max-w-5xl">
+      <h2 class="section-heading">{copy.examplesHeading}</h2>
+      <p class="mt-4 text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">{copy.examplesIntro}</p>
+
+      <!-- Earth Alt/Az -->
+      <div class="mt-10" data-lang-tabs>
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">{copy.exEarthTitle}</h3>
+        <p class="mt-2 text-gray-600 dark:text-gray-400 leading-relaxed">{copy.exEarthBody}</p>
+        <div class="mt-4 flex gap-2" role="tablist" aria-label="Language">
+          <button type="button" class="lang-tab btn-secondary text-sm px-3 py-1.5 is-active" data-lang="rust" role="tab" aria-selected="true">{copy.tabRust}</button>
+          <button type="button" class="lang-tab btn-ghost text-sm px-3 py-1.5" data-lang="python" role="tab" aria-selected="false">{copy.tabPython}</button>
+        </div>
+        <div class="mt-4 lang-panel" data-lang-panel="rust">
+          <CodeSnippet code={rustEarthAltAz} lang="rust" copyLabel={copy.copyLabel} />
+        </div>
+        <div class="mt-4 lang-panel hidden" data-lang-panel="python">
+          <CodeSnippet code={pythonEarthAltAz} lang="python" copyLabel={copy.copyLabel} />
+        </div>
+        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+          {locale === 'en'
+            ? 'Change longitude, latitude, or height to use your own location. Results vary with time and site.'
+            : 'Canvia la longitud, la latitud o l’altura per fer servir el teu lloc. Els resultats varien segons l’hora i la ubicació.'}
+        </p>
+      </div>
+
+      <!-- Lunar surface Alt/Az -->
+      <div class="mt-12" data-lang-tabs>
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">{copy.exLunarTitle}</h3>
+        <p class="mt-2 text-gray-600 dark:text-gray-400 leading-relaxed">{copy.exLunarBody}</p>
+        <div class="mt-4 flex gap-2" role="tablist" aria-label="Language">
+          <button type="button" class="lang-tab btn-secondary text-sm px-3 py-1.5 is-active" data-lang="rust" role="tab" aria-selected="true">{copy.tabRust}</button>
+          <button type="button" class="lang-tab btn-ghost text-sm px-3 py-1.5" data-lang="python" role="tab" aria-selected="false">{copy.tabPython}</button>
+        </div>
+        <div class="mt-4 lang-panel" data-lang-panel="rust">
+          <CodeSnippet code={rustLunarSurfaceAltAz} lang="rust" copyLabel={copy.copyLabel} />
+        </div>
+        <div class="mt-4 lang-panel hidden" data-lang-panel="python">
+          <CodeSnippet code={pythonLunarSurfaceAltAz} lang="python" copyLabel={copy.copyLabel} />
+        </div>
+        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+          {locale === 'en'
+            ? `Change lon/lat for your landing site. Epochs are Julian Date TT. NCP check at J2000: ≈ alt ${REFERENCE.ncpAltDeg}°, az ${REFERENCE.ncpAzDeg}°.`
+            : `Canvia lon/lat per al teu lloc d’aterratge. Les èpoques són data juliana TT. Comprovació NCP a J2000: ≈ alt ${REFERENCE.ncpAltDeg}°, az ${REFERENCE.ncpAzDeg}°.`}
+        </p>
+      </div>
+
+      <!-- Mission distance -->
+      <div class="mt-12" data-lang-tabs>
+        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">{copy.exMissionTitle}</h3>
+        <p class="mt-2 text-gray-600 dark:text-gray-400 leading-relaxed">{copy.exMissionBody}</p>
+        <div class="mt-4 flex gap-2" role="tablist" aria-label="Language">
+          <button type="button" class="lang-tab btn-secondary text-sm px-3 py-1.5 is-active" data-lang="rust" role="tab" aria-selected="true">{copy.tabRust}</button>
+          <button type="button" class="lang-tab btn-ghost text-sm px-3 py-1.5" data-lang="python" role="tab" aria-selected="false">{copy.tabPython}</button>
+        </div>
+        <div class="mt-4 lang-panel" data-lang-panel="rust">
+          <CodeSnippet code={rustMissionDistance} lang="rust" copyLabel={copy.copyLabel} />
+        </div>
+        <div class="mt-4 lang-panel hidden" data-lang-panel="python">
+          <CodeSnippet code={pythonMissionDistance} lang="python" copyLabel={copy.copyLabel} />
+        </div>
+        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400 font-mono">
+          {copy.expected}: ≈ {REFERENCE.marsGeoAu} AU (JD {REFERENCE.jd})
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Getting started -->
+  <section id="get-started" class="py-14 md:py-20 bg-gray-50 dark:bg-gray-900/40 scroll-mt-24">
+    <div class="container-custom max-w-5xl">
+      <h2 class="section-heading">{copy.getStarted}</h2>
+      <p class="mt-4 text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">{copy.getStartedIntro}</p>
+
+      <div class="mt-8 grid gap-6 md:grid-cols-2">
+        <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Rust</h3>
+          <p class="mt-1 text-sm text-gray-500">siderust {VERSIONS.rust}</p>
+          <div class="mt-4">
+            <CodeSnippet code={rustInstall} lang="bash" copyLabel={copy.copyLabel} />
+          </div>
+          <ul class="mt-4 space-y-2 text-sm">
+            <li><a class="link" href="https://crates.io/crates/siderust" target="_blank" rel="noopener noreferrer">{copy.cratesIo} ↗</a></li>
+            <li><a class="link" href={`https://docs.rs/siderust/${VERSIONS.rust}`} target="_blank" rel="noopener noreferrer">{copy.docsRs} ↗</a></li>
+            <li><a class="link" href="https://github.com/Siderust/siderust" target="_blank" rel="noopener noreferrer">{copy.rustDocs} ↗</a></li>
+          </ul>
+        </div>
+
+        <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Python</h3>
+          <p class="mt-1 text-sm text-gray-500">siderust {VERSIONS.python}</p>
+          <div class="mt-4">
+            <CodeSnippet code={pythonInstall} lang="bash" copyLabel={copy.copyLabel} />
+          </div>
+          <ul class="mt-4 space-y-2 text-sm">
+            <li><a class="link" href="https://pypi.org/project/siderust/" target="_blank" rel="noopener noreferrer">{copy.pypi} ↗</a></li>
+            <li><a class="link" href="https://github.com/Siderust/siderust-py/tree/main/doc" target="_blank" rel="noopener noreferrer">{copy.pyDocs} ↗</a></li>
+            <li><a class="link" href="https://github.com/Siderust/siderust-py" target="_blank" rel="noopener noreferrer">{copy.pythonDocs} ↗</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-wrap gap-4 text-sm">
+        <a class="link" href={localePath(locale, '/projects/siderust')}>{copy.moreDocs} ↗</a>
+        <a class="link" href={localePath(locale, '/demo')}>{copy.demo} ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Support -->
+  <section id="support" class="py-14 md:py-20 scroll-mt-24">
+    <div class="container-custom max-w-5xl">
+      <h2 class="section-heading">{copy.help}</h2>
+      <p class="mt-4 max-w-3xl text-gray-600 dark:text-gray-400 leading-relaxed">{copy.helpText}</p>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a class="btn-primary" href="mailto:help@siderust.org">{copy.contact}</a>
+        <a class="btn-secondary" href="https://github.com/Siderust/siderust/issues" target="_blank" rel="noopener noreferrer">{copy.githubIssues}</a>
+        <a class="btn-secondary" href="https://github.com/Siderust/.github/discussions" target="_blank" rel="noopener noreferrer">{copy.githubDiscussions}</a>
+      </div>
+
+      <div class="mt-10 grid gap-4 max-w-3xl">
+        <div>
+          <h3 class="font-semibold text-gray-900 dark:text-white">{copy.licenseLabel}</h3>
+          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            {copy.licenseText}{' '}
+            <a href="https://github.com/Siderust/siderust/blob/main/LICENSE" class="link" target="_blank" rel="noopener noreferrer">LICENSE ↗</a>
+          </p>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800 pt-5 leading-relaxed">
+          {copy.disclaimer}
+        </p>
+        <p class="text-xs text-gray-500 dark:text-gray-500 leading-relaxed">{copy.brandNote}</p>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<script is:inline>
+  const initSpaceAppsPage = () => {
+    document.querySelectorAll('[data-lang-tabs]').forEach((root) => {
+      const tabs = root.querySelectorAll('.lang-tab');
+      const panels = root.querySelectorAll('[data-lang-panel]');
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          const lang = tab.getAttribute('data-lang');
+          tabs.forEach((t) => {
+            const active = t === tab;
+            t.setAttribute('aria-selected', active ? 'true' : 'false');
+            t.classList.toggle('is-active', active);
+            t.classList.toggle('btn-secondary', active);
+            t.classList.toggle('btn-ghost', !active);
+          });
+          panels.forEach((panel) => {
+            panel.classList.toggle('hidden', panel.getAttribute('data-lang-panel') !== lang);
+          });
+        });
+      });
+    });
+
+    document.querySelectorAll('.copy-btn').forEach((btn) => {
+      if (btn.dataset.bound === '1') return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', async () => {
+        const code = btn.dataset.code;
+        if (!code) return;
+        try {
+          await navigator.clipboard.writeText(code);
+          const previous = btn.innerHTML;
+          btn.innerHTML = `<svg class="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`;
+          setTimeout(() => {
+            btn.innerHTML = previous;
+          }, 2000);
+        } catch (err) {
+          console.error('Failed to copy:', err);
+        }
+      });
+    });
+  };
+
+  initSpaceAppsPage();
+  document.addEventListener('astro:after-swap', initSpaceAppsPage);
+</script>
